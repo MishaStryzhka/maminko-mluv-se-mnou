@@ -101,6 +101,8 @@ const D = {
         foot: 'CZ / UA · навчальне видання для родин',
     },
     cs: {
+        tagline:
+            'Praktický průvodce pro děti a jejich rodiče v české mateřské školce',
         nav2: 'Pro koho',
         nav3: 'Obsah',
         nav4: 'Objednat',

@@ -15,26 +15,53 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Wait for Vercel preview and verify Neon
+        id: health
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
           URL="https://maminko-mluv-se-mnou-preview-git-preview-chec-9817f8-g-d7a9e92a.vercel.app/api/db-health"
+          : > db-health-result.txt
+          ready=false
 
           for attempt in {1..30}; do
             response="$(curl --silent --show-error --location --max-time 10 --write-out '\n%{http_code}' "$URL" || true)"
             body="$(printf '%s\n' "$response" | sed '$d')"
             status="$(printf '%s\n' "$response" | tail -n1)"
 
+            {
+              echo "attempt=$attempt"
+              echo "http_status=$status"
+              echo "body=$body"
+            } > db-health-result.txt
+
             echo "Attempt $attempt: HTTP $status"
             echo "$body"
 
             if [ "$status" = "200" ] && echo "$body" | grep -q '"schemaReady":true'; then
-              echo "Neon database and orders schema are ready."
-              exit 0
+              ready=true
+              break
+            fi
+
+            if [ "$status" = "401" ] || [ "$status" = "403" ]; then
+              break
             fi
 
             sleep 5
           done
 
-          echo "Preview database health check did not become ready in time."
+          echo "ready=$ready" >> "$GITHUB_OUTPUT"
+
+      - name: Upload sanitized health result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-db-health-result
+          path: db-health-result.txt
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Require healthy database
+        if: steps.health.outputs.ready != 'true'
+        run: |
+          echo "Preview database health check is not ready."
           exit 1

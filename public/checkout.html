@@ -154,7 +154,6 @@
                     </section>
 
                     <button type="submit" class="btn primary submit-mobile" data-i18n="previewOrder">Zkontrolovat objednávku</button>
-                    <div id="preview-result-mobile" class="preview-result" hidden></div>
                 </form>
 
                 <aside class="summary-card" aria-labelledby="summary-title">
@@ -178,7 +177,6 @@
                     </div>
                     <p class="summary-note" data-i18n="shippingNote">Přesnou cenu dopravy nastavíme po odsouhlasení vašeho smluvního ceníku Balíkovny.</p>
                     <button type="submit" form="checkout-form" class="btn primary submit-desktop" data-i18n="previewOrder">Zkontrolovat objednávku</button>
-                    <div id="preview-result" class="preview-result" hidden></div>
                     <div class="payment-note">
                         <strong data-i18n="paymentNotLive">Platba zatím není aktivní</strong>
                         <span data-i18n="paymentNext">Po schválení checkoutu sem připojíme platební bránu.</span>
@@ -186,6 +184,49 @@
                 </aside>
             </div>
         </main>
+
+        <dialog id="review-dialog" class="review-dialog">
+            <div class="review-shell">
+                <div class="review-top">
+                    <div>
+                        <span class="summary-kicker" data-i18n="finalCheckKicker">Poslední kontrola</span>
+                        <h2 data-i18n="finalCheckTitle">Zkontrolujte objednávku</h2>
+                    </div>
+                    <button type="button" id="close-review" class="close-picker" aria-label="Close">×</button>
+                </div>
+                <p class="review-intro" data-i18n="finalCheckIntro">Před přechodem k platbě zkontrolujte kontaktní údaje, produkt a doručení.</p>
+                <div class="review-sections">
+                    <section>
+                        <span data-i18n="productTitle">Vyberte variantu</span>
+                        <strong id="review-product"></strong>
+                        <small id="review-price"></small>
+                    </section>
+                    <section>
+                        <span data-i18n="contactTitle">Kontaktní údaje</span>
+                        <strong id="review-name"></strong>
+                        <small id="review-email"></small>
+                        <small id="review-phone"></small>
+                    </section>
+                    <section>
+                        <span data-i18n="shippingTitle">Doručení</span>
+                        <strong id="review-shipping"></strong>
+                        <small id="review-destination"></small>
+                    </section>
+                </div>
+                <div class="review-total">
+                    <span data-i18n="subtotal">Mezisoučet bez dopravy</span>
+                    <strong id="review-total"></strong>
+                </div>
+                <div class="review-warning">
+                    <strong data-i18n="simulationTitle">Preview platebního kroku</strong>
+                    <span data-i18n="simulationCopy">Další tlačítko pouze zobrazí náhled stránky po úspěšné platbě. Peníze se nestrhnou a objednávka se neuloží.</span>
+                </div>
+                <div class="review-actions">
+                    <button type="button" class="btn secondary" id="edit-order" data-i18n="editOrder">Upravit údaje</button>
+                    <button type="button" class="btn primary" id="preview-success" data-i18n="previewPayment">Zobrazit náhled po platbě</button>
+                </div>
+            </div>
+        </dialog>
 
         <dialog id="picker-dialog" class="picker-dialog">
             <div class="picker-shell">

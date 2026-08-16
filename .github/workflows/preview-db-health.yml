@@ -1,0 +1,40 @@
+name: Preview DB health
+
+on:
+  push:
+    branches:
+      - preview/checkout-balikovna
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  db-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Wait for Vercel preview and verify Neon
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://maminko-mluv-se-mnou-preview-git-preview-chec-9817f8-g-d7a9e92a.vercel.app/api/db-health"
+
+          for attempt in {1..30}; do
+            response="$(curl --silent --show-error --location --max-time 10 --write-out '\n%{http_code}' "$URL" || true)"
+            body="$(printf '%s\n' "$response" | sed '$d')"
+            status="$(printf '%s\n' "$response" | tail -n1)"
+
+            echo "Attempt $attempt: HTTP $status"
+            echo "$body"
+
+            if [ "$status" = "200" ] && echo "$body" | grep -q '"schemaReady":true'; then
+              echo "Neon database and orders schema are ready."
+              exit 0
+            fi
+
+            sleep 5
+          done
+
+          echo "Preview database health check did not become ready in time."
+          exit 1

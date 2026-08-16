@@ -7,6 +7,11 @@ const PRODUCTS = {
     print: { name: 'Tištěná publikace', price: 490 },
 };
 
+const DEFAULT_SHIPPING = {
+    pickup: 89,
+    address: 119,
+};
+
 function jsonBody(req) {
     if (req.body && typeof req.body === 'object') return req.body;
     if (typeof req.body === 'string') return JSON.parse(req.body || '{}');
@@ -20,11 +25,7 @@ function clean(value, max = 200) {
 function shippingPrice(method) {
     const key = method === 'pickup' ? 'SHIPPING_PICKUP_CZK' : 'SHIPPING_ADDRESS_CZK';
     const raw = process.env[key];
-    if (raw === undefined || raw === '') {
-        const error = new Error(`${key} is not configured`);
-        error.code = 'SHIPPING_NOT_CONFIGURED';
-        throw error;
-    }
+    if (raw === undefined || raw === '') return DEFAULT_SHIPPING[method];
     const value = Number(raw);
     if (!Number.isInteger(value) || value < 0) {
         const error = new Error(`${key} must be a non-negative integer CZK amount`);
@@ -138,7 +139,6 @@ export default async function handler(req, res) {
         console.error('Checkout failed', error?.code || error?.message);
         const configurationErrors = new Set([
             'DATABASE_NOT_CONFIGURED',
-            'SHIPPING_NOT_CONFIGURED',
             'SHIPPING_CONFIG_INVALID',
         ]);
         if (configurationErrors.has(error?.code)) {

@@ -44,7 +44,13 @@ const COPY = {
         pickerSubtitle: 'Oficiální vyhledávač Balíkovny',
         pickupMethod: 'Balíkovna / BOX',
         addressMethod: 'Balíkovna na adresu',
-        previewSuccess: 'Údaje jsou v pořádku. Toto je pouze preview — objednávka nebyla odeslána a žádná platba neproběhla.',
+        finalCheckKicker: 'Poslední kontrola',
+        finalCheckTitle: 'Zkontrolujte objednávku',
+        finalCheckIntro: 'Před přechodem k platbě zkontrolujte kontaktní údaje, produkt a doručení.',
+        simulationTitle: 'Preview platebního kroku',
+        simulationCopy: 'Další tlačítko pouze zobrazí náhled stránky po úspěšné platbě. Peníze se nestrhnou a objednávka se neuloží.',
+        editOrder: 'Upravit údaje',
+        previewPayment: 'Zobrazit náhled po platbě',
     },
     uk: {
         back: '← Назад',
@@ -57,7 +63,7 @@ const COPY = {
         printName: 'Друкований посібник',
         printDesc: 'Друкований посібник A4, 60 практичних сторінок',
         contactTitle: 'Контактні дані',
-        name: "Ім’я та прізвище",
+        name: 'Ім’я та прізвище',
         phone: 'Телефон',
         shippingTitle: 'Доставка',
         pickupDesc: 'Виберіть зручний BOX або пункт видачі Balíkovna.',
@@ -91,7 +97,13 @@ const COPY = {
         pickerSubtitle: 'Офіційний пошук Balíkovna',
         pickupMethod: 'Balíkovna / BOX',
         addressMethod: 'Balíkovna на адресу',
-        previewSuccess: 'Дані заповнені коректно. Це лише preview — замовлення не було надіслано і жодної оплати не відбулося.',
+        finalCheckKicker: 'Остання перевірка',
+        finalCheckTitle: 'Перевірте замовлення',
+        finalCheckIntro: 'Перед переходом до оплати перевірте контактні дані, товар і доставку.',
+        simulationTitle: 'Preview платіжного кроку',
+        simulationCopy: 'Наступна кнопка лише покаже макет сторінки після успішної оплати. Гроші не списуються, а замовлення не зберігається.',
+        editOrder: 'Змінити дані',
+        previewPayment: 'Показати сторінку після оплати',
     },
 };
 
@@ -109,6 +121,7 @@ const state = {
 
 const form = document.querySelector('#checkout-form');
 const pickerDialog = document.querySelector('#picker-dialog');
+const reviewDialog = document.querySelector('#review-dialog');
 const pickupPanel = document.querySelector('#pickup-panel');
 const addressPanel = document.querySelector('#address-panel');
 const pickupEmpty = document.querySelector('#pickup-empty');
@@ -145,6 +158,7 @@ function applyLanguage() {
         button.classList.toggle('on', button.dataset.lang === state.lang);
     });
     renderSummary();
+    if (reviewDialog.open) renderReview();
 }
 
 function setShippingRequirements() {
@@ -199,6 +213,79 @@ function closePicker() {
     else pickerDialog.removeAttribute('open');
 }
 
+function closeReview() {
+    if (typeof reviewDialog.close === 'function' && reviewDialog.open) reviewDialog.close();
+    else reviewDialog.removeAttribute('open');
+}
+
+function formValues() {
+    const data = new FormData(form);
+    return {
+        name: String(data.get('name') || '').trim(),
+        email: String(data.get('email') || '').trim(),
+        phone: String(data.get('phone') || '').trim(),
+        street: String(data.get('street') || '').trim(),
+        city: String(data.get('city') || '').trim(),
+        zip: formatZip(String(data.get('zip') || '').trim()),
+    };
+}
+
+function destinationText(values) {
+    if (state.shipping === 'pickup') {
+        if (!state.pickup) return '';
+        const main = state.pickup.name || 'Balíkovna';
+        const detail = state.pickup.address || `${formatZip(state.pickup.zip)} ${state.pickup.name || ''}`.trim();
+        return `${main} · ${detail}`;
+    }
+    return `${values.street}, ${values.zip} ${values.city}, Česká republika`;
+}
+
+function buildPreviewOrder() {
+    const values = formValues();
+    const product = PRODUCTS[state.product];
+    return {
+        preview: true,
+        createdAt: new Date().toISOString(),
+        reference: `PREVIEW-${Date.now().toString().slice(-8)}`,
+        lang: state.lang,
+        product: state.product,
+        productName: t(product.nameKey),
+        productPrice: product.price,
+        shipping: state.shipping,
+        shippingName: state.shipping === 'pickup' ? t('pickupMethod') : t('addressMethod'),
+        shippingPrice: null,
+        customer: {
+            name: values.name,
+            email: values.email,
+            phone: values.phone,
+        },
+        destination: destinationText(values),
+        address: state.shipping === 'address'
+            ? { street: values.street, city: values.city, zip: values.zip, country: 'CZ' }
+            : null,
+        pickup: state.shipping === 'pickup' ? state.pickup : null,
+    };
+}
+
+function renderReview() {
+    const order = buildPreviewOrder();
+    document.querySelector('#review-product').textContent = order.productName;
+    document.querySelector('#review-price').textContent = price(order.productPrice);
+    document.querySelector('#review-name').textContent = order.customer.name;
+    document.querySelector('#review-email').textContent = order.customer.email;
+    document.querySelector('#review-phone').textContent = order.customer.phone;
+    document.querySelector('#review-shipping').textContent = order.shippingName;
+    document.querySelector('#review-destination').textContent = order.destination;
+    document.querySelector('#review-total').textContent = price(order.productPrice);
+    return order;
+}
+
+function openReview() {
+    renderReview();
+    if (typeof reviewDialog.showModal === 'function') reviewDialog.showModal();
+    else reviewDialog.setAttribute('open', '');
+}
+
 document.querySelectorAll('[data-lang]').forEach((button) => {
     button.addEventListener('click', () => {
         state.lang = button.dataset.lang;
@@ -227,9 +314,21 @@ document.querySelectorAll('input[name="shipping"]').forEach((radio) => {
 document.querySelector('#open-picker').addEventListener('click', openPicker);
 document.querySelector('#change-picker').addEventListener('click', openPicker);
 document.querySelector('#close-picker').addEventListener('click', closePicker);
+document.querySelector('#close-review').addEventListener('click', closeReview);
+document.querySelector('#edit-order').addEventListener('click', closeReview);
+
+document.querySelector('#preview-success').addEventListener('click', () => {
+    const order = renderReview();
+    sessionStorage.setItem('maminko-preview-order', JSON.stringify(order));
+    location.href = 'success.html?preview=1';
+});
 
 pickerDialog.addEventListener('click', (event) => {
     if (event.target === pickerDialog) closePicker();
+});
+
+reviewDialog.addEventListener('click', (event) => {
+    if (event.target === reviewDialog) closeReview();
 });
 
 window.addEventListener('message', (event) => {
@@ -243,6 +342,8 @@ window.addEventListener('message', (event) => {
         name: point.name ?? '',
         address: point.address ?? '',
         type: point.type ?? 'BALIKOVNY',
+        lat: point.coor_y_wgs84 ?? point.coords?.lat ?? null,
+        lng: point.coor_x_wgs84 ?? point.coords?.lng ?? null,
     };
 
     if (event.data.phone) {
@@ -254,17 +355,6 @@ window.addEventListener('message', (event) => {
     renderSummary();
     closePicker();
 });
-
-function showPreviewSuccess() {
-    const desktop = document.querySelector('#preview-result');
-    const mobile = document.querySelector('#preview-result-mobile');
-    [desktop, mobile].forEach((box) => {
-        box.textContent = t('previewSuccess');
-        box.hidden = false;
-    });
-    const target = window.matchMedia('(max-width: 900px)').matches ? mobile : desktop;
-    target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
 
 form.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -281,7 +371,7 @@ form.addEventListener('submit', (event) => {
         return;
     }
 
-    showPreviewSuccess();
+    openReview();
 });
 
 setShippingRequirements();

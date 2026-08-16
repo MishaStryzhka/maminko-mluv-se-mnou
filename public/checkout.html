@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="uk">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <meta name="robots" content="noindex,nofollow" />
+        <title>Objednávka · Maminko, mluv se mnou</title>
+        <link rel="stylesheet" href="checkout.css" />
+        <link rel="stylesheet" href="review.css" />
+    </head>
+    <body>
+        <header class="checkout-header">
+            <a class="brand" href="index.html"><b>♥</b> Maminko, mluv se mnou</a>
+            <div class="header-actions">
+                <a class="back-link" href="index.html#products" data-i18n="back">← Zpět</a>
+                <div class="lang" aria-label="Language">
+                    <button type="button" data-lang="cs">CZ</button>
+                    <button type="button" data-lang="uk">UA</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="checkout-shell">
+            <div class="checkout-heading">
+                <div class="preview-badge" data-i18n="previewBadge">TESTOVACÍ NÁHLED</div>
+                <h1 data-i18n="title">Objednávka</h1>
+                <p data-i18n="intro">Vyplňte údaje a vyberte způsob doručení. V tomto náhledu se objednávka neodesílá a platba se nespouští.</p>
+            </div>
+
+            <div class="checkout-layout">
+                <form id="checkout-form" class="checkout-form" novalidate>
+                    <section class="step-card" aria-labelledby="product-title">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h2 id="product-title" data-i18n="productTitle">Vyberte variantu</h2>
+                            <div class="choice-grid product-grid">
+                                <label class="choice-card product-choice" data-product-card="full">
+                                    <input type="radio" name="product" value="full" />
+                                    <span class="choice-body">
+                                        <span class="choice-title" data-i18n="fullName">Kompletní balíček</span>
+                                        <span class="choice-copy" data-i18n="fullDesc">Tištěná publikace + digitální materiály v Telegram kanálu</span>
+                                        <strong>750 Kč</strong>
+                                    </span>
+                                </label>
+                                <label class="choice-card product-choice" data-product-card="print">
+                                    <input type="radio" name="product" value="print" />
+                                    <span class="choice-body">
+                                        <span class="choice-title" data-i18n="printName">Tištěná publikace</span>
+                                        <span class="choice-copy" data-i18n="printDesc">Tištěná publikace A4, 60 praktických stran</span>
+                                        <strong>490 Kč</strong>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="step-card" aria-labelledby="contact-title">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h2 id="contact-title" data-i18n="contactTitle">Kontaktní údaje</h2>
+                            <div class="fields two-cols">
+                                <label>
+                                    <span data-i18n="name">Jméno a příjmení</span>
+                                    <input name="name" autocomplete="name" required />
+                                </label>
+                                <label>
+                                    <span data-i18n="phone">Telefon</span>
+                                    <input name="phone" type="tel" autocomplete="tel" placeholder="+420 ..." required />
+                                </label>
+                                <label class="field-wide">
+                                    <span>E-mail</span>
+                                    <input name="email" type="email" autocomplete="email" required />
+                                </label>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="step-card" aria-labelledby="shipping-title">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h2 id="shipping-title" data-i18n="shippingTitle">Doručení</h2>
+                            <div class="choice-grid shipping-grid">
+                                <label class="choice-card shipping-choice" data-shipping-card="pickup">
+                                    <input type="radio" name="shipping" value="pickup" checked />
+                                    <span class="choice-body">
+                                        <span class="balikovna-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+                                        <span class="choice-title">Balíkovna / BOX</span>
+                                        <span class="choice-copy" data-i18n="pickupDesc">Vyberte si box nebo výdejní místo, které vám vyhovuje.</span>
+                                    </span>
+                                </label>
+                                <label class="choice-card shipping-choice" data-shipping-card="address">
+                                    <input type="radio" name="shipping" value="address" />
+                                    <span class="choice-body">
+                                        <span class="balikovna-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+                                        <span class="choice-title" data-i18n="addressName">Balíkovna na adresu</span>
+                                        <span class="choice-copy" data-i18n="addressDesc">Doručíme na vámi vybranou adresu v České republice.</span>
+                                    </span>
+                                </label>
+                            </div>
+
+                            <div id="pickup-panel" class="shipping-panel">
+                                <div id="pickup-empty" class="pickup-empty">
+                                    <div>
+                                        <strong data-i18n="pickupChooseTitle">Vyberte Balíkovnu nebo BOX</strong>
+                                        <p data-i18n="pickupChooseCopy">Otevře se oficiální vyhledávač Balíkovny s mapou a aktuální databází výdejních míst.</p>
+                                    </div>
+                                    <button type="button" class="btn secondary" id="open-picker" data-i18n="choosePickup">Vybrat Balíkovnu</button>
+                                </div>
+                                <div id="pickup-selected" class="pickup-selected" hidden>
+                                    <div class="selected-icon">✓</div>
+                                    <div class="selected-copy">
+                                        <span class="eyebrow" data-i18n="selectedPickup">Vybrané výdejní místo</span>
+                                        <strong id="pickup-name"></strong>
+                                        <span id="pickup-address"></span>
+                                        <small id="pickup-id"></small>
+                                    </div>
+                                    <button type="button" class="text-button" id="change-picker" data-i18n="change">Změnit</button>
+                                </div>
+                                <p id="pickup-error" class="field-error" hidden data-i18n="pickupRequired">Vyberte prosím Balíkovnu nebo BOX.</p>
+                            </div>
+
+                            <div id="address-panel" class="shipping-panel" hidden>
+                                <div class="fields two-cols">
+                                    <label class="field-wide">
+                                        <span data-i18n="street">Ulice a číslo</span>
+                                        <input name="street" autocomplete="street-address" data-address-required />
+                                    </label>
+                                    <label>
+                                        <span data-i18n="city">Město</span>
+                                        <input name="city" autocomplete="address-level2" data-address-required />
+                                    </label>
+                                    <label>
+                                        <span data-i18n="zip">PSČ</span>
+                                        <input name="zip" inputmode="numeric" autocomplete="postal-code" placeholder="110 00" data-address-required />
+                                    </label>
+                                </div>
+                                <div class="country-row">
+                                    <span data-i18n="country">Země</span>
+                                    <strong>Česká republika</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="step-card compact" aria-labelledby="review-title">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h2 id="review-title" data-i18n="reviewTitle">Kontrola</h2>
+                            <label class="checkbox-row">
+                                <input type="checkbox" name="checked" required />
+                                <span data-i18n="confirmData">Potvrzuji, že jsem zkontroloval/a údaje objednávky.</span>
+                            </label>
+                            <p class="legal-note" data-i18n="legalNote">Obchodní podmínky a ochranu osobních údajů připojíme před spuštěním skutečných plateb.</p>
+                        </div>
+                    </section>
+
+                    <button type="submit" class="btn primary submit-mobile" data-i18n="previewOrder">Zkontrolovat objednávku</button>
+                </form>
+
+                <aside class="summary-card" aria-labelledby="summary-title">
+                    <span class="summary-kicker" data-i18n="summaryKicker">Shrnutí</span>
+                    <h2 id="summary-title" data-i18n="summaryTitle">Vaše objednávka</h2>
+                    <div class="summary-product">
+                        <div>
+                            <strong id="summary-product-name"></strong>
+                            <span id="summary-product-desc"></span>
+                        </div>
+                        <strong id="summary-product-price"></strong>
+                    </div>
+                    <div class="summary-lines">
+                        <div><span data-i18n="delivery">Doprava</span><strong id="summary-shipping"></strong></div>
+                        <div id="summary-point-row" hidden><span data-i18n="pickup">Výdejní místo</span><strong id="summary-point"></strong></div>
+                        <div><span data-i18n="shippingPrice">Cena dopravy</span><strong data-i18n="shippingTbd">doplníme</strong></div>
+                    </div>
+                    <div class="summary-total">
+                        <span data-i18n="subtotal">Mezisoučet bez dopravy</span>
+                        <strong id="summary-total"></strong>
+                    </div>
+                    <p class="summary-note" data-i18n="shippingNote">Přesnou cenu dopravy nastavíme po odsouhlasení vašeho smluvního ceníku Balíkovny.</p>
+                    <button type="submit" form="checkout-form" class="btn primary submit-desktop" data-i18n="previewOrder">Zkontrolovat objednávku</button>
+                    <div class="payment-note">
+                        <strong data-i18n="paymentNotLive">Platba zatím není aktivní</strong>
+                        <span data-i18n="paymentNext">Po schválení checkoutu sem připojíme platební bránu.</span>
+                    </div>
+                </aside>
+            </div>
+        </main>
+
+        <dialog id="review-dialog" class="review-dialog">
+            <div class="review-shell">
+                <div class="review-top">
+                    <div>
+                        <span class="summary-kicker" data-i18n="finalCheckKicker">Poslední kontrola</span>
+                        <h2 data-i18n="finalCheckTitle">Zkontrolujte objednávku</h2>
+                    </div>
+                    <button type="button" id="close-review" class="close-picker" aria-label="Close">×</button>
+                </div>
+                <p class="review-intro" data-i18n="finalCheckIntro">Před přechodem k platbě zkontrolujte kontaktní údaje, produkt a doručení.</p>
+                <div class="review-sections">
+                    <section>
+                        <span data-i18n="productTitle">Vyberte variantu</span>
+                        <strong id="review-product"></strong>
+                        <small id="review-price"></small>
+                    </section>
+                    <section>
+                        <span data-i18n="contactTitle">Kontaktní údaje</span>
+                        <strong id="review-name"></strong>
+                        <small id="review-email"></small>
+                        <small id="review-phone"></small>
+                    </section>
+                    <section>
+                        <span data-i18n="shippingTitle">Doručení</span>
+                        <strong id="review-shipping"></strong>
+                        <small id="review-destination"></small>
+                    </section>
+                </div>
+                <div class="review-total">
+                    <span data-i18n="subtotal">Mezisoučet bez dopravy</span>
+                    <strong id="review-total"></strong>
+                </div>
+                <div class="review-warning">
+                    <strong data-i18n="simulationTitle">Preview platebního kroku</strong>
+                    <span data-i18n="simulationCopy">Další tlačítko pouze zobrazí náhled stránky po úspěšné platbě. Peníze se nestrhnou a objednávka se neuloží.</span>
+                </div>
+                <div class="review-actions">
+                    <button type="button" class="btn secondary" id="edit-order" data-i18n="editOrder">Upravit údaje</button>
+                    <button type="button" class="btn primary" id="preview-success" data-i18n="previewPayment">Zobrazit náhled po platbě</button>
+                </div>
+            </div>
+        </dialog>
+
+        <dialog id="picker-dialog" class="picker-dialog">
+            <div class="picker-shell">
+                <div class="picker-header">
+                    <div>
+                        <strong data-i18n="pickerTitle">Vyberte Balíkovnu / BOX</strong>
+                        <span data-i18n="pickerSubtitle">Oficiální vyhledávač Balíkovny</span>
+                    </div>
+                    <button type="button" id="close-picker" class="close-picker" aria-label="Close">×</button>
+                </div>
+                <iframe
+                    id="balikovna-picker"
+                    title="Výběr místa pro vyzvednutí zásilky"
+                    src="https://b2c.cpost.cz/locations/?type=BALIKOVNY&skipLocation=false"
+                    allow="geolocation"
+                    loading="lazy"
+                ></iframe>
+            </div>
+        </dialog>
+
+        <script src="checkout.js"></script>
+    </body>
+</html>

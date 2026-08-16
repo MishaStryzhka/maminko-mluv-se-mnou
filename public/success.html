@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="uk">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <meta name="robots" content="noindex,nofollow" />
+        <title>Objednávka přijata · Maminko, mluv se mnou</title>
+        <link rel="stylesheet" href="checkout.css" />
+        <link rel="stylesheet" href="success.css" />
+    </head>
+    <body>
+        <header class="checkout-header">
+            <a class="brand" href="index.html"><b>♥</b> Maminko, mluv se mnou</a>
+            <div class="lang" aria-label="Language">
+                <button type="button" data-lang="cs">CZ</button>
+                <button type="button" data-lang="uk">UA</button>
+            </div>
+        </header>
+
+        <main class="success-shell">
+            <div class="preview-badge" data-i18n="previewBadge">TESTOVACÍ NÁHLED</div>
+            <div class="success-icon">✓</div>
+            <h1 data-i18n="title">Děkujeme za objednávku</h1>
+            <p class="success-lead" data-i18n="lead">Platba byla úspěšná. Potvrzení objednávky jsme poslali na váš e-mail.</p>
+
+            <div class="simulation-box">
+                <strong data-i18n="simulationTitle">Toto je pouze preview</strong>
+                <span data-i18n="simulationCopy">Žádná platba neproběhla a objednávka nebyla uložena. Tato stránka simuluje stav po úspěšné platbě.</span>
+            </div>
+
+            <section class="success-card">
+                <div class="success-card-head">
+                    <div>
+                        <span data-i18n="orderNumber">Číslo objednávky</span>
+                        <strong id="order-reference">PREVIEW</strong>
+                    </div>
+                    <div class="paid-pill" data-i18n="paid">ZAPLACENO</div>
+                </div>
+
+                <div class="success-grid">
+                    <div>
+                        <span data-i18n="product">Produkt</span>
+                        <strong id="order-product"></strong>
+                        <small id="order-price"></small>
+                    </div>
+                    <div>
+                        <span data-i18n="delivery">Doručení</span>
+                        <strong id="order-shipping"></strong>
+                        <small id="order-destination"></small>
+                    </div>
+                    <div>
+                        <span data-i18n="customer">Zákazník</span>
+                        <strong id="order-customer"></strong>
+                        <small id="order-email"></small>
+                    </div>
+                    <div>
+                        <span data-i18n="next">Co bude dál</span>
+                        <strong data-i18n="nextTitle">Připravíme zásilku</strong>
+                        <small data-i18n="nextCopy">Po skutečném spuštění zde zákazník uvidí informaci o expedici a následně tracking Balíkovny.</small>
+                    </div>
+                </div>
+            </section>
+
+            <div class="success-actions">
+                <a class="btn secondary" href="checkout.html" data-i18n="backCheckout">← Zpět do checkoutu</a>
+                <a class="btn primary" href="index.html" data-i18n="home">Zpět na hlavní stránku</a>
+            </div>
+        </main>
+
+        <script src="success.js"></script>
+    </body>
+</html>

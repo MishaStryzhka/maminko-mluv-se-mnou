@@ -150,7 +150,19 @@
                                 <input type="checkbox" name="checked" required />
                                 <span data-i18n="confirmData">Potvrzuji, že jsem zkontroloval/a údaje objednávky.</span>
                             </label>
-                            <p class="legal-note" data-i18n="legalNote">Obchodní podmínky a ochranu osobních údajů připojíme před spuštěním skutečných plateb.</p>
+                            <label class="checkbox-row">
+                                <input type="checkbox" name="termsAccepted" required />
+                                <span>
+                                    <span id="legal-terms-text">Souhlasím s obchodními podmínkami a beru na vědomí informace o ochraně osobních údajů.</span>
+                                    <a href="obchodni-podminky.html" target="_blank" rel="noopener">Obchodní podmínky</a> ·
+                                    <a href="ochrana-osobnich-udaju.html" target="_blank" rel="noopener">Ochrana osobních údajů</a>
+                                </span>
+                            </label>
+                            <label class="checkbox-row" id="digital-consent-row">
+                                <input type="checkbox" name="digitalConsent" id="digital-consent" />
+                                <span id="digital-consent-text">U kompletního balíčku výslovně souhlasím se zpřístupněním digitálního obsahu ihned po zaplacení před uplynutím 14denní lhůty a beru na vědomí, že po zahájení plnění zaniká právo odstoupit od smlouvy v rozsahu digitálního obsahu.</span>
+                            </label>
+                            <p class="legal-note">Právní dokumenty se otevřou v nové kartě; před pokračováním je můžete kdykoli zkontrolovat.</p>
                         </div>
                     </section>
 
@@ -249,5 +261,6 @@
         </dialog>
 
         <script src="checkout.js"></script>
+        <script src="checkout-legal.js"></script>
     </body>
 </html>

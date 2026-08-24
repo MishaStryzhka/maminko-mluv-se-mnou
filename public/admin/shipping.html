@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Zásilky · Administrace</title>
+    <link rel="stylesheet" href="/admin.css" />
+    <link rel="stylesheet" href="/admin-auth.css" />
+    <link rel="stylesheet" href="/admin-pages.css" />
+</head>
+<body data-admin-page="shipping">
+    <aside class="sidebar">
+        <a class="admin-brand" href="/"><b>♥</b><span>Maminko,<br>mluv se mnou</span></a>
+        <nav>
+            <a href="/admin/orders">Objednávky</a>
+            <a class="active" href="/admin/shipping" data-sales-access>Zásilky</a>
+            <a href="/admin/products" data-sales-access>Produkty</a>
+            <a href="/admin/users" data-admin-only>Uživatelé</a>
+            <a href="/admin/settings" data-admin-only>Nastavení</a>
+        </nav>
+        <div class="preview-note"><span id="connection-state">NEPŘIHLÁŠENO</span><br><small id="sidebar-user">Administrace</small></div>
+    </aside>
+    <main class="admin-main">
+        <header class="admin-header">
+            <div><span class="eyebrow">ADMINISTRACE</span><h1>Zásilky</h1></div>
+            <div class="header-actions"><span id="current-user" class="current-user" hidden></span><button type="button" class="text-button" id="logout-admin" hidden>Odhlásit</button><a class="back-store" href="/">← Zpět na web</a></div>
+        </header>
+        <section class="auth-card" id="admin-auth">
+            <div><span class="eyebrow">PŘIHLÁŠENÍ</span><h2>Vstup do administrace</h2><p>Přihlaste se svým e-mailem a heslem.</p></div>
+            <form id="admin-login-form" class="auth-form auth-form-grid"><label><span>E-mail</span><input id="admin-email" type="email" autocomplete="username" required /></label><label><span>Heslo</span><input id="admin-password" type="password" autocomplete="current-password" required /></label><button type="submit" class="primary-action">Přihlásit se</button></form>
+            <p id="auth-message" class="admin-message" hidden></p>
+        </section>
+        <div id="admin-content" hidden>
+            <section class="stats">
+                <article><span>K odeslání</span><strong id="ship-ready">0</strong><small>READY</small></article>
+                <article><span>Odesláno</span><strong id="ship-sent">0</strong><small>SENT</small></article>
+                <article><span>Doručeno</span><strong id="ship-delivered">0</strong><small>DELIVERED</small></article>
+                <article><span>Balíkovna API</span><strong>—</strong><small>další krok</small></article>
+            </section>
+            <section class="page-card">
+                <div class="section-head"><div><h2>Přehled zásilek</h2><p>Zde jsou objednávky oddělené od obchodního přehledu. Po připojení Balíkovny sem doplníme vytvoření zásilky, štítky a tracking.</p></div></div>
+                <div class="table-wrap"><table class="shipping-table"><thead><tr><th>Objednávka</th><th>Zákazník</th><th>Doručení</th><th>Stav zásilky</th><th>Platba</th></tr></thead><tbody id="shipping-body"></tbody></table></div>
+                <p id="shipping-empty" class="empty-state" hidden>Zatím nejsou žádné objednávky.</p>
+            </section>
+        </div>
+    </main>
+    <script src="/admin-pages.js"></script>
+</body>
+</html>

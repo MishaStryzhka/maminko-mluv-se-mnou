@@ -6,7 +6,7 @@ Administrace používá účty uložené v Neon databázi a přihlášení e-mai
 
 ### První administrátor
 
-První účet je omezen na e-mail `mykhailo.stryzhka@seznam.cz` (lze změnit přes `ADMIN_OWNER_EMAIL`). Pro jednorázové vytvoření prvního účtu se použije hodnota `ADMIN_API_TOKEN` jako setup kód. Jakmile je první účet vytvořen, setup endpoint další účet nevytvoří a `ADMIN_API_TOKEN` lze z Vercelu odstranit.
+První účet je omezen na e-mail `mykhailo.stryzhka@seznam.cz` (lze změnit přes `ADMIN_OWNER_EMAIL`). Pro jednorázové vytvoření prvního účtu se použije hodnota `ADMIN_API_TOKEN` pouze jako setup kód. Jakmile je první účet vytvořen, setup endpoint další účet nevytvoří a `ADMIN_API_TOKEN` lze z Vercelu odstranit. Pro běžné přihlašování se žádný token nezadává.
 
 ### Role
 

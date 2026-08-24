@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Uživatelé · Administrace</title>
+    <link rel="stylesheet" href="/admin.css" />
+    <link rel="stylesheet" href="/admin-auth.css" />
+    <link rel="stylesheet" href="/admin-pages.css" />
+</head>
+<body data-admin-page="users">
+    <aside class="sidebar">
+        <a class="admin-brand" href="/"><b>♥</b><span>Maminko,<br>mluv se mnou</span></a>
+        <nav>
+            <a href="/admin/orders">Objednávky</a>
+            <a href="/admin/shipping" data-sales-access>Zásilky</a>
+            <a href="/admin/products" data-sales-access>Produkty</a>
+            <a class="active" href="/admin/users" data-admin-only>Uživatelé</a>
+            <a href="/admin/settings" data-admin-only>Nastavení</a>
+        </nav>
+        <div class="preview-note"><span id="connection-state">NEPŘIHLÁŠENO</span><br><small id="sidebar-user">Administrace</small></div>
+    </aside>
+    <main class="admin-main">
+        <header class="admin-header">
+            <div><span class="eyebrow">SPRÁVA PŘÍSTUPŮ</span><h1>Uživatelé</h1></div>
+            <div class="header-actions"><span id="current-user" class="current-user" hidden></span><button type="button" class="text-button" id="logout-admin" hidden>Odhlásit</button><a class="back-store" href="/">← Zpět na web</a></div>
+        </header>
+        <section class="auth-card" id="admin-auth">
+            <div><span class="eyebrow">PŘIHLÁŠENÍ</span><h2>Vstup do administrace</h2><p>Přihlaste se svým e-mailem a heslem.</p></div>
+            <form id="admin-login-form" class="auth-form auth-form-grid"><label><span>E-mail</span><input id="admin-email" type="email" autocomplete="username" required /></label><label><span>Heslo</span><input id="admin-password" type="password" autocomplete="current-password" required /></label><button type="submit" class="primary-action">Přihlásit se</button></form>
+            <p id="auth-message" class="admin-message" hidden></p>
+        </section>
+        <div id="admin-content" hidden>
+            <section class="page-card">
+                <div class="section-head"><div><h2>Správa uživatelů</h2><p>Administrátor může přidávat uživatele, určovat jejich roli a rušit nevyužité pozvánky.</p></div></div>
+                <div class="role-note"><b>Administrátor</b> — plný přístup · <b>Prodej</b> — objednávky, zásilky a produkty · <b>Účetní</b> — přehled objednávek a plateb.</div>
+                <form id="invite-user-form" class="user-form">
+                    <label><span>Jméno</span><input id="invite-name" type="text" placeholder="Jméno uživatele" required /></label>
+                    <label><span>E-mail</span><input id="invite-email" type="email" placeholder="email@example.cz" required /></label>
+                    <label><span>Role</span><select id="invite-role"><option value="sales">Prodej</option><option value="accountant">Účetní</option><option value="admin">Administrátor</option></select></label>
+                    <button type="submit" class="primary-action">Vytvořit pozvánku</button>
+                </form>
+                <div id="invite-result" class="invite-result" hidden></div>
+                <div class="table-wrap"><table class="users-table"><thead><tr><th>Uživatel</th><th>Role</th><th>Stav</th><th>Poslední přihlášení</th><th></th></tr></thead><tbody id="users-body"></tbody></table></div>
+                <div id="pending-invites" class="pending-invites" hidden></div>
+                <p id="users-message" class="admin-message" hidden></p>
+            </section>
+        </div>
+    </main>
+    <script src="/admin-pages.js"></script>
+</body>
+</html>

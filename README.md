@@ -2,7 +2,7 @@
 
 ## Administrace
 
-Administrace používá účty uložené v Neon databázi a přihlášení e-mailem a heslem. Hesla se ukládají pouze jako scrypt hash se samostatným saltem a přihlášený uživatel dostane HttpOnly/Secure session cookie.
+Administrace používá účty uložené v Neon databázi a přihlášení e-mailem a heslem. Hesla se ukládají pouze jako scrypt hash se samostatným saltem a přihlášený uživatel dostane HttpOnly/Secure session cookie s platností 7 dní. Po pěti chybných pokusech je účet na 15 minut dočasně uzamčen.
 
 ### První administrátor
 

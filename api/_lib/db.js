@@ -135,3 +135,20 @@ export async function updatePaymentState(paymentId, gopayState, paymentStatus) {
     `;
     return rows[0] || null;
 }
+
+export async function listOrdersForAdmin(limit = 100) {
+    await ensureSchema();
+    const sql = getSql();
+    const safeLimit = Math.max(1, Math.min(Number(limit) || 100, 200));
+    return sql`
+        SELECT order_number, created_at, updated_at, lang, product_code, product_name,
+               product_price, currency, customer_name, customer_email, customer_phone,
+               shipping_method, shipping_price, shipping_status,
+               pickup_point_id, pickup_point_name, pickup_point_zip, pickup_point_address,
+               pickup_point_type, address_street, address_city, address_zip, address_country,
+               total_amount, payment_status, gopay_payment_id, gopay_state, paid_at
+        FROM orders
+        ORDER BY created_at DESC
+        LIMIT ${safeLimit}
+    `;
+}

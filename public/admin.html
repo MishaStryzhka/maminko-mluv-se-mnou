@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="robots" content="noindex,nofollow" />
-    <title>Admin preview · Maminko, mluv se mnou</title>
+    <title>Administrace · Maminko, mluv se mnou</title>
     <link rel="stylesheet" href="admin.css" />
 </head>
 <body>
@@ -16,7 +16,7 @@
             <a href="#products">Produkty</a>
             <a href="#settings">Nastavení</a>
         </nav>
-        <div class="preview-note">PREVIEW<br><small>Bez reálných dat</small></div>
+        <div class="preview-note"><span id="connection-state">NEPŘIPOJENO</span><br><small>Neon objednávky</small></div>
     </aside>
 
     <main class="admin-main">
@@ -28,58 +28,70 @@
             <a class="back-store" href="index.html">← Zpět na web</a>
         </header>
 
-        <section class="stats">
-            <article><span>Objednávky</span><strong id="stat-orders">1</strong><small>Dnes</small></article>
-            <article><span>Zaplaceno</span><strong id="stat-paid">1</strong><small>PAID</small></article>
-            <article><span>K odeslání</span><strong id="stat-ready">1</strong><small>Balíkovna</small></article>
-            <article><span>Obrat</span><strong id="stat-revenue">750 Kč</strong><small>bez dopravy</small></article>
+        <section class="auth-card" id="admin-auth">
+            <div>
+                <span class="eyebrow">PŘÍSTUP K DATŮM</span>
+                <h2>Přihlášení do administrace</h2>
+                <p>Objednávky obsahují osobní údaje zákazníků. Pro načtení reálných dat z Neon zadejte administrační klíč.</p>
+            </div>
+            <form id="admin-login-form" class="auth-form">
+                <input id="admin-token" type="password" autocomplete="current-password" placeholder="Admin klíč" required />
+                <button type="submit" class="primary-action">Načíst objednávky</button>
+            </form>
+            <p id="auth-message" class="admin-message" hidden></p>
         </section>
 
-        <section class="orders-card" id="orders">
-            <div class="section-head">
-                <div>
-                    <h2>Poslední objednávky</h2>
-                    <p>Platba a doprava jsou vedené jako dva samostatné stavy.</p>
+        <div id="admin-content" hidden>
+            <section class="stats">
+                <article><span>Objednávky</span><strong id="stat-orders">0</strong><small>načteno</small></article>
+                <article><span>Zaplaceno</span><strong id="stat-paid">0</strong><small>PAID</small></article>
+                <article><span>K odeslání</span><strong id="stat-ready">0</strong><small>READY</small></article>
+                <article><span>Obrat</span><strong id="stat-revenue">0 Kč</strong><small>zaplacené objednávky</small></article>
+            </section>
+
+            <section class="orders-card" id="orders">
+                <div class="section-head">
+                    <div>
+                        <h2>Poslední objednávky</h2>
+                        <p>Reálná data z databáze Neon. Platba a doprava jsou vedené jako dva samostatné stavy.</p>
+                    </div>
+                    <div class="filters">
+                        <button type="button" class="on" data-filter="all">Vše</button>
+                        <button type="button" data-filter="paid">Zaplacené</button>
+                        <button type="button" data-filter="ready">K odeslání</button>
+                    </div>
                 </div>
-                <div class="filters"><button class="on">Vše</button><button>Zaplacené</button><button>K odeslání</button></div>
-            </div>
 
-            <div class="table-wrap">
-                <table>
-                    <thead><tr><th>Objednávka</th><th>Zákazník</th><th>Produkt</th><th>Platba</th><th>Doprava</th><th>Částka</th><th></th></tr></thead>
-                    <tbody>
-                        <tr id="order-row">
-                            <td><strong id="order-ref">PREVIEW</strong><small id="order-date">dnes</small></td>
-                            <td><strong id="order-name">Anna Novak</strong><small id="order-email">anna@example.cz</small></td>
-                            <td><strong id="order-product">Kompletní balíček</strong><small id="order-destination">Balíkovna / BOX</small></td>
-                            <td><span class="status paid">PAID</span></td>
-                            <td><span class="status ready">READY</span></td>
-                            <td><strong id="order-price">750 Kč</strong></td>
-                            <td><button class="detail-button" id="open-detail">Detail</button></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Objednávka</th><th>Zákazník</th><th>Produkt</th><th>Platba</th><th>Doprava</th><th>Částka</th><th></th></tr></thead>
+                        <tbody id="orders-body"></tbody>
+                    </table>
+                </div>
+                <p id="orders-empty" class="empty-state" hidden>Žádné objednávky pro tento filtr.</p>
+            </section>
 
-        <section class="detail-card" id="order-detail">
-            <div class="section-head">
-                <div><span class="eyebrow">DETAIL OBJEDNÁVKY</span><h2 id="detail-ref">PREVIEW</h2></div>
-                <span class="status paid">ZAPLACENO</span>
-            </div>
-            <div class="detail-grid">
-                <article><span>Zákazník</span><strong id="detail-name"></strong><small id="detail-contact"></small></article>
-                <article><span>Produkt</span><strong id="detail-product"></strong><small id="detail-price"></small></article>
-                <article><span>Doručení</span><strong id="detail-shipping"></strong><small id="detail-destination"></small></article>
-                <article><span>Balíkovna</span><strong id="detail-shipment">Zásilka ještě nevytvořena</strong><small>Tracking se zobrazí po vytvoření zásilky.</small></article>
-            </div>
-            <div class="admin-actions">
-                <button type="button" class="primary-action" id="create-shipment">Vytvořit zásilku Balíkovna</button>
-                <button type="button" class="secondary-action" disabled>Vytisknout štítek</button>
-                <button type="button" class="secondary-action" disabled>Tracking</button>
-            </div>
-            <p id="admin-message" class="admin-message" hidden>Preview: v produkci zde backend po potvrzené platbě zavolá API Balíkovny, uloží tracking a zpřístupní štítek.</p>
-        </section>
+            <section class="detail-card" id="order-detail">
+                <div class="section-head">
+                    <div><span class="eyebrow">DETAIL OBJEDNÁVKY</span><h2 id="detail-ref">—</h2></div>
+                    <span id="detail-payment-badge" class="status">—</span>
+                </div>
+                <div class="detail-grid">
+                    <article><span>Zákazník</span><strong id="detail-name">—</strong><small id="detail-contact">—</small></article>
+                    <article><span>Produkt</span><strong id="detail-product">—</strong><small id="detail-price">—</small></article>
+                    <article><span>Platba</span><strong id="detail-payment">—</strong><small id="detail-gopay">—</small></article>
+                    <article><span>Doručení</span><strong id="detail-shipping">—</strong><small id="detail-destination">—</small></article>
+                    <article><span>Balíkovna</span><strong id="detail-shipment">Zásilka ještě nevytvořena</strong><small>Tracking se zobrazí po připojení API Balíkovny.</small></article>
+                </div>
+                <div class="admin-actions">
+                    <button type="button" class="primary-action" id="create-shipment">Vytvořit zásilku Balíkovna</button>
+                    <button type="button" class="secondary-action" disabled>Vytisknout štítek</button>
+                    <button type="button" class="secondary-action" disabled>Tracking</button>
+                    <button type="button" class="secondary-action" id="logout-admin">Odhlásit</button>
+                </div>
+                <p id="admin-message" class="admin-message" hidden></p>
+            </section>
+        </div>
     </main>
 
     <script src="admin.js"></script>

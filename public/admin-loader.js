@@ -6,6 +6,14 @@
     const auth = document.querySelector('#admin-auth');
     const setup = document.querySelector('#admin-setup');
     const content = document.querySelector('#admin-content');
+    const main = document.querySelector('.admin-main');
+    const header = document.querySelector('.admin-header');
+
+    function syncLoaderRegion() {
+        if (!main || !header) return;
+        const top = Math.max(96, Math.round(header.offsetTop + header.offsetHeight + 14));
+        main.style.setProperty('--admin-loader-top', `${top}px`);
+    }
 
     function visible(element) {
         return Boolean(element && !element.hidden);
@@ -55,8 +63,12 @@
     }
 
     function check() {
+        syncLoaderRegion();
         if (pageReady()) finish();
     }
+
+    syncLoaderRegion();
+    window.addEventListener('resize', syncLoaderRegion, { passive: true });
 
     observer = new MutationObserver(check);
     observer.observe(document.documentElement, {
@@ -69,6 +81,6 @@
 
     check();
 
-    // Never leave the interface permanently covered if an unexpected client error occurs.
+    // Never leave the content area permanently covered if an unexpected client error occurs.
     window.setTimeout(finish, 10000);
 })();

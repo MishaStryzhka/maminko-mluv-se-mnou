@@ -11,7 +11,7 @@ První účet je omezen na e-mail `mykhailo.stryzhka@seznam.cz` (lze změnit př
 ### Role
 
 - `admin` – plný přístup a správa uživatelů
-- `sales` – objednávky a budoucí správa zásilek
-- `accountant` – přehled objednávek a plateb bez správy uživatelů a zásilek
+- `sales` – objednávky a budoucí správa zásilek; bez správy uživatelů
+- `accountant` – přehled objednávek a plateb; bez správy uživatelů a bez akcí nad zásilkami
 
 Administrátor přidává další uživatele přes jednorázovou pozvánku platnou 48 hodin. Pozvaný uživatel si na pozvánkové stránce nastaví vlastní heslo.

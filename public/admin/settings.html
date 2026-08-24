@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Nastavení · Administrace</title>
+    <link rel="stylesheet" href="/admin.css" />
+    <link rel="stylesheet" href="/admin-auth.css" />
+    <link rel="stylesheet" href="/admin-pages.css" />
+</head>
+<body data-admin-page="settings">
+    <aside class="sidebar">
+        <a class="admin-brand" href="/"><b>♥</b><span>Maminko,<br>mluv se mnou</span></a>
+        <nav>
+            <a href="/admin/orders">Objednávky</a>
+            <a href="/admin/shipping" data-sales-access>Zásilky</a>
+            <a href="/admin/products" data-sales-access>Produkty</a>
+            <a href="/admin/users" data-admin-only>Uživatelé</a>
+            <a class="active" href="/admin/settings" data-admin-only>Nastavení</a>
+        </nav>
+        <div class="preview-note"><span id="connection-state">NEPŘIHLÁŠENO</span><br><small id="sidebar-user">Administrace</small></div>
+    </aside>
+    <main class="admin-main">
+        <header class="admin-header">
+            <div><span class="eyebrow">ADMINISTRACE</span><h1>Nastavení</h1></div>
+            <div class="header-actions"><span id="current-user" class="current-user" hidden></span><button type="button" class="text-button" id="logout-admin" hidden>Odhlásit</button><a class="back-store" href="/">← Zpět na web</a></div>
+        </header>
+        <section class="auth-card" id="admin-auth" hidden>
+            <div><span class="eyebrow">PŘIHLÁŠENÍ</span><h2>Vstup do administrace</h2><p>Přihlaste se svým e-mailem a heslem.</p></div>
+            <form id="admin-login-form" class="auth-form auth-form-grid"><label><span>E-mail</span><input id="admin-email" type="email" autocomplete="username" required /></label><label><span>Heslo</span><input id="admin-password" type="password" autocomplete="current-password" required /></label><button type="submit" class="primary-action">Přihlásit se</button></form>
+            <p id="auth-message" class="admin-message" hidden></p>
+        </section>
+        <div id="admin-content" hidden>
+            <section class="page-card">
+                <div class="section-head"><div><h2>Stav systému</h2><p>Kontrola základního nastavení checkoutu. Citlivé hodnoty se zde nezobrazují.</p></div></div>
+                <div class="settings-list">
+                    <div class="settings-row"><span>Neon databáze</span><strong id="setting-db">Načítám…</strong></div>
+                    <div class="settings-row"><span>GoPay</span><strong id="setting-gopay">Načítám…</strong></div>
+                    <div class="settings-row"><span>Balíkovna · výdejní místo</span><strong id="setting-pickup">Načítám…</strong></div>
+                    <div class="settings-row"><span>Balíkovna · na adresu</span><strong id="setting-address">Načítám…</strong></div>
+                </div>
+                <p id="settings-status" class="admin-message" hidden></p>
+            </section>
+        </div>
+    </main>
+    <script src="/admin-pages.js"></script>
+    <script src="/admin-loader.js"></script>
+</body>
+</html>

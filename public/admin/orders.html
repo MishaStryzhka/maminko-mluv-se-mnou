@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Objednávky · Administrace</title>
+    <link rel="stylesheet" href="/admin.css" />
+    <link rel="stylesheet" href="/admin-auth.css" />
+    <link rel="stylesheet" href="/admin-pages.css" />
+</head>
+<body data-admin-page="orders">
+    <aside class="sidebar">
+        <a class="admin-brand" href="/"><b>♥</b><span>Maminko,<br>mluv se mnou</span></a>
+        <nav>
+            <a class="active" href="/admin/orders">Objednávky</a>
+            <a href="/admin/shipping" data-sales-access>Zásilky</a>
+            <a href="/admin/products" data-sales-access>Produkty</a>
+            <a href="/admin/users" data-admin-only>Uživatelé</a>
+            <a href="/admin/settings" data-admin-only>Nastavení</a>
+        </nav>
+        <div class="preview-note"><span id="connection-state">NEPŘIHLÁŠENO</span><br><small id="sidebar-user">Administrace</small></div>
+    </aside>
+
+    <main class="admin-main">
+        <header class="admin-header">
+            <div><span class="eyebrow">ADMINISTRACE</span><h1>Objednávky</h1></div>
+            <div class="header-actions">
+                <span id="current-user" class="current-user" hidden></span>
+                <button type="button" class="text-button" id="logout-admin" hidden>Odhlásit</button>
+                <a class="back-store" href="/">← Zpět na web</a>
+            </div>
+        </header>
+
+        <section class="auth-card" id="admin-auth" hidden>
+            <div><span class="eyebrow">PŘIHLÁŠENÍ</span><h2>Vstup do administrace</h2><p>Přihlaste se svým e-mailem a heslem.</p></div>
+            <form id="admin-login-form" class="auth-form auth-form-grid">
+                <label><span>E-mail</span><input id="admin-email" type="email" autocomplete="username" required /></label>
+                <label><span>Heslo</span><input id="admin-password" type="password" autocomplete="current-password" required /></label>
+                <button type="submit" class="primary-action">Přihlásit se</button>
+            </form>
+            <p id="auth-message" class="admin-message" hidden></p>
+        </section>
+
+        <section class="auth-card" id="admin-setup" hidden>
+            <div><span class="eyebrow">PRVNÍ NASTAVENÍ</span><h2>Vytvoření administrátora</h2><p>Tento krok je dostupný pouze před vytvořením prvního účtu.</p></div>
+            <form id="admin-setup-form" class="auth-form auth-form-grid">
+                <label><span>Jméno</span><input id="setup-name" type="text" value="Mykhailo Stryzhka" required /></label>
+                <label><span>E-mail</span><input id="setup-email" type="email" value="mykhailo.stryzhka@seznam.cz" readonly required /></label>
+                <label><span>Nové heslo</span><input id="setup-password" type="password" minlength="12" required /></label>
+                <label><span>Heslo znovu</span><input id="setup-password-confirm" type="password" minlength="12" required /></label>
+                <label class="setup-code-field"><span>Jednorázový setup kód</span><input id="setup-code" type="password" required /></label>
+                <button type="submit" class="primary-action">Vytvořit administrátora</button>
+            </form>
+            <p id="setup-message" class="admin-message" hidden></p>
+        </section>
+
+        <div id="admin-content" hidden>
+            <section class="stats">
+                <article><span>Objednávky</span><strong id="stat-orders">0</strong><small>načteno</small></article>
+                <article><span>Zaplaceno</span><strong id="stat-paid">0</strong><small>PAID</small></article>
+                <article><span>K odeslání</span><strong id="stat-ready">0</strong><small>READY</small></article>
+                <article><span>Obrat</span><strong id="stat-revenue">0 Kč</strong><small>zaplacené objednávky</small></article>
+            </section>
+
+            <section class="orders-card">
+                <div class="section-head">
+                    <div><h2>Poslední objednávky</h2><p>Reálná data z Neon. Platba a doprava jsou vedené samostatně.</p></div>
+                    <div class="filters"><button type="button" class="on" data-filter="all">Vše</button><button type="button" data-filter="paid">Zaplacené</button><button type="button" data-filter="ready">K odeslání</button></div>
+                </div>
+                <div class="table-wrap">
+                    <table><thead><tr><th>Objednávka</th><th>Zákazník</th><th>Produkt</th><th>Platba</th><th>Doprava</th><th>Částka</th><th></th></tr></thead><tbody id="orders-body"></tbody></table>
+                </div>
+                <p id="orders-empty" class="empty-state" hidden>Žádné objednávky pro tento filtr.</p>
+            </section>
+
+            <section class="detail-card" id="order-detail">
+                <div class="section-head"><div><span class="eyebrow">DETAIL OBJEDNÁVKY</span><h2 id="detail-ref">—</h2></div><span id="detail-payment-badge" class="status">—</span></div>
+                <div class="detail-grid">
+                    <article><span>Zákazník</span><strong id="detail-name">—</strong><small id="detail-contact">—</small></article>
+                    <article><span>Produkt</span><strong id="detail-product">—</strong><small id="detail-price">—</small></article>
+                    <article><span>Platba</span><strong id="detail-payment">—</strong><small id="detail-gopay">—</small></article>
+                    <article><span>Doručení</span><strong id="detail-shipping">—</strong><small id="detail-destination">—</small></article>
+                </div>
+                <div class="admin-actions"><a class="primary-action" href="/admin/shipping" style="padding:11px 14px;border-radius:10px;font-size:11px;font-weight:900;text-decoration:none">Přejít do zásilek</a></div>
+            </section>
+        </div>
+    </main>
+    <script src="/admin-pages.js"></script>
+    <script src="/admin-loader.js"></script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Pozvánka do administrace · Maminko, mluv se mnou</title>
+    <link rel="stylesheet" href="admin.css" />
+    <link rel="stylesheet" href="admin-auth.css" />
+</head>
+<body>
+    <main class="invite-page">
+        <section class="invite-shell">
+            <span class="eyebrow">ADMINISTRACE</span>
+            <h1>Přijetí pozvánky</h1>
+            <p id="invite-loading">Ověřuji pozvánku…</p>
+            <div id="invite-content" hidden>
+                <div class="invite-meta">
+                    <strong id="invite-name">—</strong>
+                    <span id="invite-email">—</span>
+                    <span id="invite-role">—</span>
+                </div>
+                <form id="accept-invite-form" class="invite-form">
+                    <label><span>Nové heslo</span><input id="invite-password" type="password" autocomplete="new-password" minlength="12" placeholder="Minimálně 12 znaků" required /></label>
+                    <label><span>Heslo znovu</span><input id="invite-password-confirm" type="password" autocomplete="new-password" minlength="12" required /></label>
+                    <button type="submit" class="primary-action">Vytvořit účet</button>
+                </form>
+            </div>
+            <p id="invite-message" class="admin-message" hidden></p>
+        </section>
+    </main>
+    <script src="admin-invite.js"></script>
+</body>
+</html>

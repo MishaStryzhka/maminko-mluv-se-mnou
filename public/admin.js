@@ -1,21 +1,35 @@
-const TOKEN_KEY = 'maminko-admin-token';
-
 const state = {
+    user: null,
     orders: [],
     filter: 'all',
     selectedOrderNumber: null,
+    users: [],
+    invites: [],
 };
 
 const authCard = document.querySelector('#admin-auth');
+const setupCard = document.querySelector('#admin-setup');
 const authForm = document.querySelector('#admin-login-form');
-const tokenInput = document.querySelector('#admin-token');
+const setupForm = document.querySelector('#admin-setup-form');
 const authMessage = document.querySelector('#auth-message');
+const setupMessage = document.querySelector('#setup-message');
 const adminContent = document.querySelector('#admin-content');
 const connectionState = document.querySelector('#connection-state');
+const sidebarUser = document.querySelector('#sidebar-user');
+const currentUser = document.querySelector('#current-user');
+const logoutButton = document.querySelector('#logout-admin');
 const ordersBody = document.querySelector('#orders-body');
 const ordersEmpty = document.querySelector('#orders-empty');
 const detail = document.querySelector('#order-detail');
 const adminMessage = document.querySelector('#admin-message');
+const usersSection = document.querySelector('#users');
+const usersNav = document.querySelector('#users-nav');
+const usersBody = document.querySelector('#users-body');
+const usersMessage = document.querySelector('#users-message');
+const pendingInvites = document.querySelector('#pending-invites');
+const inviteResult = document.querySelector('#invite-result');
+const inviteForm = document.querySelector('#invite-user-form');
+const createShipmentButton = document.querySelector('#create-shipment');
 
 function price(value, currency = 'CZK') {
     return new Intl.NumberFormat('cs-CZ', {
@@ -58,6 +72,14 @@ function shippingLabel(status) {
     return labels[status] || String(status || '—').toUpperCase();
 }
 
+function roleLabel(role) {
+    return {
+        admin: 'Administrátor',
+        sales: 'Prodej',
+        accountant: 'Účetní',
+    }[role] || role || '—';
+}
+
 function statusClass(type, status) {
     if (type === 'payment') {
         if (status === 'paid') return 'paid';
@@ -94,14 +116,13 @@ function setText(selector, value) {
     if (element) element.textContent = value || '—';
 }
 
-function showAuthMessage(message) {
-    authMessage.textContent = message;
-    authMessage.hidden = !message;
+function showMessage(element, message) {
+    element.textContent = message || '';
+    element.hidden = !message;
 }
 
-function setConnected(connected) {
-    connectionState.textContent = connected ? 'PŘIPOJENO' : 'NEPŘIPOJENO';
-    connectionState.classList.toggle('connected', connected);
+async function readJson(response) {
+    return response.json().catch(() => ({}));
 }
 
 function createStatusBadge(type, status) {
@@ -196,43 +217,208 @@ function renderDetail(order) {
     detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-async function loadOrders(token) {
-    showAuthMessage('Načítám objednávky…');
-    try {
-        const response = await fetch('/api/admin-orders?limit=100', {
-            headers: { 'X-Admin-Token': token },
-            cache: 'no-store',
-        });
-        const data = await response.json().catch(() => ({}));
+function setSignedOut(message = '') {
+    state.user = null;
+    state.orders = [];
+    state.users = [];
+    state.invites = [];
+    state.selectedOrderNumber = null;
+    adminContent.hidden = true;
+    setupCard.hidden = true;
+    authCard.hidden = false;
+    usersNav.hidden = true;
+    usersSection.hidden = true;
+    currentUser.hidden = true;
+    logoutButton.hidden = true;
+    connectionState.textContent = 'NEPŘIHLÁŠENO';
+    connectionState.classList.remove('connected');
+    sidebarUser.textContent = 'Administrace';
+    detail.classList.remove('open');
+    showMessage(authMessage, message);
+}
 
+async function startSession(user) {
+    state.user = user;
+    authCard.hidden = true;
+    setupCard.hidden = true;
+    adminContent.hidden = false;
+    currentUser.hidden = false;
+    logoutButton.hidden = false;
+    currentUser.textContent = `${user.displayName} · ${roleLabel(user.role)}`;
+    connectionState.textContent = 'PŘIHLÁŠENO';
+    connectionState.classList.add('connected');
+    sidebarUser.textContent = user.displayName;
+    const isAdmin = user.role === 'admin';
+    usersNav.hidden = !isAdmin;
+    usersSection.hidden = !isAdmin;
+    createShipmentButton.hidden = !['admin', 'sales'].includes(user.role);
+    showMessage(authMessage, '');
+    showMessage(setupMessage, '');
+    await loadOrders();
+    if (isAdmin) await loadUsers();
+}
+
+async function loadOrders() {
+    try {
+        const response = await fetch('/api/admin-orders?limit=100', { cache: 'no-store' });
+        const data = await readJson(response);
+        if (response.status === 401) {
+            setSignedOut('Přihlášení vypršelo. Přihlaste se znovu.');
+            return;
+        }
         if (!response.ok) {
-            if (response.status === 401) throw new Error('Nesprávný administrační klíč.');
-            if (data.error === 'ADMIN_NOT_CONFIGURED') throw new Error('Na Vercelu zatím chybí proměnná ADMIN_API_TOKEN.');
             if (data.error === 'DATABASE_NOT_CONFIGURED') throw new Error('Na Vercelu chybí připojení DATABASE_URL k Neon databázi.');
             throw new Error('Objednávky se nepodařilo načíst.');
         }
-
         state.orders = Array.isArray(data.orders) ? data.orders : [];
-        sessionStorage.setItem(TOKEN_KEY, token);
-        authCard.hidden = true;
-        adminContent.hidden = false;
-        showAuthMessage('');
-        setConnected(true);
         renderStats();
         renderOrders();
     } catch (error) {
-        sessionStorage.removeItem(TOKEN_KEY);
-        adminContent.hidden = true;
-        authCard.hidden = false;
-        setConnected(false);
-        showAuthMessage(error.message || 'Objednávky se nepodařilo načíst.');
+        showMessage(adminMessage, error.message || 'Objednávky se nepodařilo načíst.');
     }
 }
 
-authForm.addEventListener('submit', (event) => {
+function renderUsers() {
+    usersBody.replaceChildren();
+    state.users.forEach((user) => {
+        const tr = document.createElement('tr');
+        tr.appendChild(cell(user.displayName, user.email));
+        tr.appendChild(cell(roleLabel(user.role)));
+        tr.appendChild(cell(user.active ? 'Aktivní' : 'Deaktivovaný'));
+        tr.appendChild(cell(dateLabel(user.lastLoginAt)));
+
+        const actionTd = document.createElement('td');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'detail-button';
+        button.dataset.userId = user.id;
+        button.dataset.active = String(!user.active);
+        button.textContent = user.active ? 'Deaktivovat' : 'Aktivovat';
+        if (user.id === state.user?.id) button.disabled = true;
+        actionTd.appendChild(button);
+        tr.appendChild(actionTd);
+        usersBody.appendChild(tr);
+    });
+
+    pendingInvites.replaceChildren();
+    pendingInvites.hidden = state.invites.length === 0;
+    if (state.invites.length) {
+        const title = document.createElement('strong');
+        title.textContent = 'Čekající pozvánky';
+        pendingInvites.appendChild(title);
+        state.invites.forEach((invite) => {
+            const line = document.createElement('p');
+            line.textContent = `${invite.displayName} · ${invite.email} · ${roleLabel(invite.role)} · do ${dateLabel(invite.expiresAt)}`;
+            pendingInvites.appendChild(line);
+        });
+    }
+}
+
+async function loadUsers() {
+    try {
+        const response = await fetch('/api/admin-users', { cache: 'no-store' });
+        const data = await readJson(response);
+        if (!response.ok) throw new Error('Uživatele se nepodařilo načíst.');
+        state.users = Array.isArray(data.users) ? data.users : [];
+        state.invites = Array.isArray(data.invites) ? data.invites : [];
+        renderUsers();
+    } catch (error) {
+        showMessage(usersMessage, error.message || 'Uživatele se nepodařilo načíst.');
+    }
+}
+
+function showInvite(invite) {
+    inviteResult.replaceChildren();
+    const text = document.createElement('p');
+    text.textContent = `Pozvánka pro ${invite.displayName} je připravena. Odkaz platí ${invite.expiresInHours} hodin:`;
+    const link = document.createElement('a');
+    link.href = invite.inviteUrl;
+    link.textContent = invite.inviteUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    const copy = document.createElement('button');
+    copy.type = 'button';
+    copy.className = 'secondary-action';
+    copy.textContent = 'Kopírovat odkaz';
+    copy.addEventListener('click', async () => {
+        try {
+            await navigator.clipboard.writeText(invite.inviteUrl);
+            copy.textContent = 'Zkopírováno';
+        } catch {
+            copy.textContent = 'Zkopírujte odkaz ručně';
+        }
+    });
+    inviteResult.append(text, link, copy);
+    inviteResult.hidden = false;
+}
+
+authForm.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const token = tokenInput.value.trim();
-    if (token) loadOrders(token);
+    showMessage(authMessage, 'Přihlašuji…');
+    try {
+        const response = await fetch('/api/admin-auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: document.querySelector('#admin-email').value.trim(),
+                password: document.querySelector('#admin-password').value,
+            }),
+        });
+        const data = await readJson(response);
+        if (!response.ok) {
+            if (response.status === 429) throw new Error('Účet je po několika chybných pokusech na 15 minut uzamčen.');
+            throw new Error('Nesprávný e-mail nebo heslo.');
+        }
+        document.querySelector('#admin-password').value = '';
+        await startSession(data.user);
+    } catch (error) {
+        showMessage(authMessage, error.message || 'Přihlášení se nezdařilo.');
+    }
+});
+
+setupForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const password = document.querySelector('#setup-password').value;
+    const confirmation = document.querySelector('#setup-password-confirm').value;
+    if (password !== confirmation) {
+        showMessage(setupMessage, 'Hesla se neshodují.');
+        return;
+    }
+    showMessage(setupMessage, 'Vytvářím účet administrátora…');
+    try {
+        const response = await fetch('/api/admin-setup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                displayName: document.querySelector('#setup-name').value.trim(),
+                email: document.querySelector('#setup-email').value.trim(),
+                password,
+                setupCode: document.querySelector('#setup-code').value,
+            }),
+        });
+        const data = await readJson(response);
+        if (!response.ok) {
+            if (data.error === 'PASSWORD_TOO_SHORT') throw new Error('Heslo musí mít alespoň 12 znaků.');
+            if (data.error === 'INVALID_SETUP_CODE') throw new Error('Jednorázový setup kód není správný.');
+            if (data.error === 'SETUP_NOT_CONFIGURED') throw new Error('Na Vercelu chybí dočasná proměnná ADMIN_API_TOKEN pro první nastavení.');
+            throw new Error('Účet administrátora se nepodařilo vytvořit.');
+        }
+        document.querySelector('#setup-password').value = '';
+        document.querySelector('#setup-password-confirm').value = '';
+        document.querySelector('#setup-code').value = '';
+        await startSession(data.user);
+        showMessage(adminMessage, 'Administrátor byl vytvořen. ADMIN_API_TOKEN už můžete z Vercelu odstranit.');
+    } catch (error) {
+        showMessage(setupMessage, error.message || 'První nastavení se nezdařilo.');
+    }
+});
+
+logoutButton.addEventListener('click', async () => {
+    try {
+        await fetch('/api/admin-auth', { method: 'DELETE' });
+    } finally {
+        setSignedOut('Odhlášeno.');
+    }
 });
 
 ordersBody.addEventListener('click', (event) => {
@@ -251,7 +437,7 @@ document.querySelectorAll('[data-filter]').forEach((button) => {
     });
 });
 
-document.querySelector('#create-shipment').addEventListener('click', () => {
+createShipmentButton.addEventListener('click', () => {
     const order = state.orders.find((item) => item.orderNumber === state.selectedOrderNumber);
     adminMessage.hidden = false;
     if (!order || order.shipping?.status !== 'ready') {
@@ -261,21 +447,85 @@ document.querySelector('#create-shipment').addEventListener('click', () => {
     adminMessage.textContent = 'Objednávka je připravena. Další krok bude připojení API Balíkovny, které vytvoří zásilku, tracking a štítek.';
 });
 
-document.querySelector('#logout-admin').addEventListener('click', () => {
-    sessionStorage.removeItem(TOKEN_KEY);
-    state.orders = [];
-    state.selectedOrderNumber = null;
-    adminContent.hidden = true;
-    authCard.hidden = false;
-    detail.classList.remove('open');
-    tokenInput.value = '';
-    setConnected(false);
-    showAuthMessage('Odhlášeno.');
+inviteForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    showMessage(usersMessage, 'Vytvářím pozvánku…');
+    inviteResult.hidden = true;
+    try {
+        const response = await fetch('/api/admin-users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'invite',
+                displayName: document.querySelector('#invite-name').value.trim(),
+                email: document.querySelector('#invite-email').value.trim(),
+                role: document.querySelector('#invite-role').value,
+            }),
+        });
+        const data = await readJson(response);
+        if (!response.ok) {
+            if (data.error === 'USER_EXISTS') throw new Error('Uživatel s tímto e-mailem už existuje.');
+            throw new Error('Pozvánku se nepodařilo vytvořit.');
+        }
+        showMessage(usersMessage, '');
+        showInvite(data.invite);
+        inviteForm.reset();
+        await loadUsers();
+    } catch (error) {
+        showMessage(usersMessage, error.message || 'Pozvánku se nepodařilo vytvořit.');
+    }
 });
 
-const storedToken = sessionStorage.getItem(TOKEN_KEY);
-if (storedToken) {
-    loadOrders(storedToken);
-} else {
-    setConnected(false);
+usersBody.addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-user-id]');
+    if (!button || button.disabled) return;
+    showMessage(usersMessage, 'Ukládám změnu…');
+    try {
+        const response = await fetch('/api/admin-users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'setActive',
+                userId: button.dataset.userId,
+                active: button.dataset.active === 'true',
+            }),
+        });
+        const data = await readJson(response);
+        if (!response.ok) {
+            if (data.error === 'LAST_ADMIN') throw new Error('Nelze deaktivovat posledního administrátora.');
+            throw new Error('Stav uživatele se nepodařilo změnit.');
+        }
+        showMessage(usersMessage, '');
+        await loadUsers();
+    } catch (error) {
+        showMessage(usersMessage, error.message || 'Stav uživatele se nepodařilo změnit.');
+    }
+});
+
+async function initialize() {
+    try {
+        const authResponse = await fetch('/api/admin-auth', { cache: 'no-store' });
+        if (authResponse.ok) {
+            const authData = await readJson(authResponse);
+            await startSession(authData.user);
+            return;
+        }
+
+        const setupResponse = await fetch('/api/admin-setup', { cache: 'no-store' });
+        const setupData = await readJson(setupResponse);
+        if (setupResponse.ok && setupData.setupRequired) {
+            authCard.hidden = true;
+            setupCard.hidden = false;
+            document.querySelector('#setup-email').value = setupData.ownerEmail || 'mykhailo.stryzhka@seznam.cz';
+            if (!setupData.setupConfigured) {
+                showMessage(setupMessage, 'Pro jednorázové první nastavení je potřeba dočasně nastavit ADMIN_API_TOKEN ve Vercelu. Po vytvoření účtu ho odstraníte.');
+            }
+            return;
+        }
+        setSignedOut();
+    } catch {
+        setSignedOut('Administrace se nepodařila připojit.');
+    }
 }
+
+initialize();

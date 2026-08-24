@@ -1,20 +1,5 @@
-import crypto from 'node:crypto';
+import { getAdminSession } from './_lib/admin-auth.js';
 import { listOrdersForAdmin } from './_lib/db.js';
-
-function adminSecret() {
-    return String(process.env.ADMIN_API_TOKEN || '');
-}
-
-function authorized(req) {
-    const expected = adminSecret();
-    const provided = String(req.headers['x-admin-token'] || '');
-    if (!expected || !provided) return false;
-
-    const a = Buffer.from(expected);
-    const b = Buffer.from(provided);
-    if (a.length !== b.length) return false;
-    return crypto.timingSafeEqual(a, b);
-}
 
 function mapOrder(row) {
     return {
@@ -67,15 +52,13 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'METHOD_NOT_ALLOWED' });
     }
 
-    if (!adminSecret()) {
-        return res.status(503).json({ error: 'ADMIN_NOT_CONFIGURED' });
-    }
-
-    if (!authorized(req)) {
-        return res.status(401).json({ error: 'UNAUTHORIZED' });
-    }
-
     try {
+        const user = await getAdminSession(req);
+        if (!user) return res.status(401).json({ error: 'UNAUTHORIZED' });
+        if (!['admin', 'sales', 'accountant'].includes(user.role)) {
+            return res.status(403).json({ error: 'FORBIDDEN' });
+        }
+
         const limit = Number(req.query?.limit || 100);
         const rows = await listOrdersForAdmin(limit);
         return res.status(200).json({ orders: rows.map(mapOrder) });

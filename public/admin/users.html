@@ -41,7 +41,6 @@
                     <label><span>Role</span><select id="invite-role"><option value="sales">Prodej</option><option value="accountant">Účetní</option><option value="admin">Administrátor</option></select></label>
                     <button type="submit" class="primary-action">Vytvořit pozvánku</button>
                 </form>
-                <div id="invite-result" class="invite-result" hidden></div>
                 <div class="table-wrap"><table class="users-table"><thead><tr><th>Uživatel</th><th>Role</th><th>Stav</th><th>Poslední přihlášení</th><th></th></tr></thead><tbody id="users-body"></tbody></table></div>
                 <div id="pending-invites" class="pending-invites" hidden></div>
                 <p id="users-message" class="admin-message" hidden></p>
@@ -49,6 +48,7 @@
         </div>
     </main>
     <script src="/admin-pages.js"></script>
+    <script src="/admin-users-enhanced.js"></script>
     <script src="/admin-loader.js"></script>
 </body>
 </html>

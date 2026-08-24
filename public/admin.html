@@ -5,7 +5,16 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="robots" content="noindex,nofollow" />
     <title>Administrace · Maminko, mluv se mnou</title>
-    <script>window.location.replace('/admin/orders' + window.location.search);</script>
+    <script>
+        const routes = {
+            '#orders': '/admin/orders',
+            '#shipping': '/admin/shipping',
+            '#products': '/admin/products',
+            '#users': '/admin/users',
+            '#settings': '/admin/settings'
+        };
+        window.location.replace((routes[window.location.hash] || '/admin/orders') + window.location.search);
+    </script>
 </head>
 <body>
     <p><a href="/admin/orders">Pokračovat do administrace</a></p>

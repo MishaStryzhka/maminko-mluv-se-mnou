@@ -14,9 +14,10 @@
             <a class="active" href="#orders">Objednávky</a>
             <a href="#shipping">Zásilky</a>
             <a href="#products">Produkty</a>
+            <a id="users-nav" href="#users" hidden>Uživatelé</a>
             <a href="#settings">Nastavení</a>
         </nav>
-        <div class="preview-note"><span id="connection-state">NEPŘIPOJENO</span><br><small>Neon objednávky</small></div>
+        <div class="preview-note"><span id="connection-state">NEPŘIHLÁŠENO</span><br><small id="sidebar-user">Administrace</small></div>
     </aside>
 
     <main class="admin-main">
@@ -25,20 +26,43 @@
                 <span class="eyebrow">ADMINISTRACE</span>
                 <h1>Objednávky</h1>
             </div>
-            <a class="back-store" href="index.html">← Zpět na web</a>
+            <div class="header-actions">
+                <span id="current-user" class="current-user" hidden></span>
+                <button type="button" class="text-button" id="logout-admin" hidden>Odhlásit</button>
+                <a class="back-store" href="index.html">← Zpět na web</a>
+            </div>
         </header>
 
         <section class="auth-card" id="admin-auth">
             <div>
-                <span class="eyebrow">PŘÍSTUP K DATŮM</span>
-                <h2>Přihlášení do administrace</h2>
-                <p>Objednávky obsahují osobní údaje zákazníků. Pro načtení reálných dat z Neon zadejte administrační klíč.</p>
+                <span class="eyebrow">PŘIHLÁŠENÍ</span>
+                <h2>Vstup do administrace</h2>
+                <p>Přihlaste se svým e-mailem a heslem. Přístup k objednávkám je dostupný jen aktivním uživatelům administrace.</p>
             </div>
-            <form id="admin-login-form" class="auth-form">
-                <input id="admin-token" type="password" autocomplete="current-password" placeholder="Admin klíč" required />
-                <button type="submit" class="primary-action">Načíst objednávky</button>
+            <form id="admin-login-form" class="auth-form auth-form-grid">
+                <label><span>E-mail</span><input id="admin-email" type="email" autocomplete="username" placeholder="email@example.cz" required /></label>
+                <label><span>Heslo</span><input id="admin-password" type="password" autocomplete="current-password" placeholder="Heslo" required /></label>
+                <button type="submit" class="primary-action">Přihlásit se</button>
             </form>
             <p id="auth-message" class="admin-message" hidden></p>
+        </section>
+
+        <section class="auth-card" id="admin-setup" hidden>
+            <div>
+                <span class="eyebrow">PRVNÍ NASTAVENÍ</span>
+                <h2>Vytvoření administrátora</h2>
+                <p>Tento krok se zobrazí pouze před vytvořením prvního účtu. Zvolíte si vlastní heslo a potom se už budete přihlašovat jen e-mailem a heslem.</p>
+            </div>
+            <form id="admin-setup-form" class="auth-form auth-form-grid">
+                <label><span>Jméno</span><input id="setup-name" type="text" value="Mykhailo Stryzhka" autocomplete="name" required /></label>
+                <label><span>E-mail</span><input id="setup-email" type="email" value="mykhailo.stryzhka@seznam.cz" autocomplete="username" readonly required /></label>
+                <label><span>Nové heslo</span><input id="setup-password" type="password" autocomplete="new-password" minlength="12" placeholder="Minimálně 12 znaků" required /></label>
+                <label><span>Heslo znovu</span><input id="setup-password-confirm" type="password" autocomplete="new-password" minlength="12" required /></label>
+                <label class="setup-code-field"><span>Jednorázový setup kód</span><input id="setup-code" type="password" autocomplete="one-time-code" placeholder="Hodnota ADMIN_API_TOKEN" required /></label>
+                <button type="submit" class="primary-action">Vytvořit administrátora</button>
+            </form>
+            <p class="setup-hint">Po vytvoření účtu už tento kód nebude potřeba a proměnnou <b>ADMIN_API_TOKEN</b> můžete z Vercelu odstranit.</p>
+            <p id="setup-message" class="admin-message" hidden></p>
         </section>
 
         <div id="admin-content" hidden>
@@ -87,9 +111,35 @@
                     <button type="button" class="primary-action" id="create-shipment">Vytvořit zásilku Balíkovna</button>
                     <button type="button" class="secondary-action" disabled>Vytisknout štítek</button>
                     <button type="button" class="secondary-action" disabled>Tracking</button>
-                    <button type="button" class="secondary-action" id="logout-admin">Odhlásit</button>
                 </div>
                 <p id="admin-message" class="admin-message" hidden></p>
+            </section>
+
+            <section class="orders-card users-card" id="users" hidden>
+                <div class="section-head">
+                    <div>
+                        <span class="eyebrow">SPRÁVA PŘÍSTUPŮ</span>
+                        <h2>Uživatelé</h2>
+                        <p>Administrátor může přidávat uživatele a určit jejich roli. Pozvánka platí 48 hodin.</p>
+                    </div>
+                </div>
+
+                <form id="invite-user-form" class="user-form">
+                    <label><span>Jméno</span><input id="invite-name" type="text" placeholder="Jméno uživatele" required /></label>
+                    <label><span>E-mail</span><input id="invite-email" type="email" placeholder="email@example.cz" required /></label>
+                    <label><span>Role</span><select id="invite-role"><option value="sales">Prodej</option><option value="accountant">Účetní</option><option value="admin">Administrátor</option></select></label>
+                    <button type="submit" class="primary-action">Vytvořit pozvánku</button>
+                </form>
+                <div id="invite-result" class="invite-result" hidden></div>
+
+                <div class="table-wrap users-table-wrap">
+                    <table class="users-table">
+                        <thead><tr><th>Uživatel</th><th>Role</th><th>Stav</th><th>Poslední přihlášení</th><th></th></tr></thead>
+                        <tbody id="users-body"></tbody>
+                    </table>
+                </div>
+                <div id="pending-invites" class="pending-invites" hidden></div>
+                <p id="users-message" class="admin-message" hidden></p>
             </section>
         </div>
     </main>

@@ -13,6 +13,7 @@
         <meta name="robots" content="index,follow,max-image-preview:large" />
         <meta name="theme-color" content="#fbf8f3" />
         <link rel="canonical" href="https://maminko-mluv-se-mnou.cz/" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="Maminko, mluv se mnou" />
@@ -49,6 +50,15 @@
 
         <link rel="stylesheet" href="style.css" />
         <link rel="stylesheet" href="gallery.css" />
+        <style>
+            .author-name-inline {
+                color: var(--d);
+                font-weight: 900;
+                padding: 0 0.08em 0.04em;
+                border-bottom: 2px solid var(--v);
+                background: linear-gradient(180deg, transparent 58%, #eee7f4 58%);
+            }
+        </style>
     </head>
     <body>
         <header>
@@ -89,11 +99,8 @@
                     <div class="authorpic"><img src="author-final-hq.svg" alt="Khrystyna Stryzhka" width="1170" height="2072" loading="lazy" /></div>
                     <div>
                         <h3 data-t="at"></h3>
-                        <div
-                            aria-label="Autorka Khrystyna Stryzhka"
-                            style="display:flex;align-items:center;gap:10px;font-family:'Arial Narrow',Arial,sans-serif;font-size:clamp(20px,1.8vw,26px);line-height:1.1;margin:0 0 12px;color:var(--d);font-weight:900;letter-spacing:-.02em"
-                        ><span aria-hidden="true" style="width:29px;height:29px;flex:0 0 29px;border-radius:50%;display:inline-grid;place-items:center;background:linear-gradient(135deg,var(--v),var(--d));color:#fff;font-size:13px;line-height:1;box-shadow:0 6px 16px #6f589c35">✦</span><span>Khrystyna Stryzhka</span></div>
-                        <p data-t="a1"></p><p data-t="a2"></p><p data-t="a3"></p><p class="note" data-t="a4"></p>
+                        <p data-t="a1" data-author-intro></p>
+                        <p data-t="a2"></p><p data-t="a3"></p><p class="note" data-t="a4"></p>
                     </div>
                 </div>
                 <div class="authorcta"><a class="btn primary" href="#products" data-t="ctaBottom"></a></div>
@@ -107,6 +114,23 @@
                 const tagline = document.querySelector('[data-t="tagline"]');
                 if (tagline) tagline.textContent = D.uk.tagline;
             }
+
+            function highlightAuthorName() {
+                const intro = document.querySelector('[data-author-intro]');
+                if (!intro || !D[l] || !D[l].a1) return;
+                const fullText = D[l].a1;
+                const authorName = l === 'uk' ? 'Христина Стрижка' : 'Khrystyna Stryzhka';
+                if (fullText.startsWith(authorName)) {
+                    intro.innerHTML = `<span class="author-name-inline">${authorName}</span>${fullText.slice(authorName.length)}`;
+                } else {
+                    intro.textContent = fullText;
+                }
+            }
+
+            highlightAuthorName();
+            document.querySelectorAll('[data-lang]').forEach((button) => {
+                button.addEventListener('click', () => setTimeout(highlightAuthorName, 0));
+            });
         </script>
     </body>
 </html>

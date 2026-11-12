@@ -6,9 +6,9 @@ const scryptAsync = promisify(crypto.scrypt);
 const SESSION_COOKIE = 'maminko_admin_session';
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
 const ROLES = new Set(['admin', 'sales', 'accountant']);
-let adminSchemaReady = false;
+let adminSchemaPromise;
 
-function getSql() {
+export function getSql() {
     if (!process.env.DATABASE_URL) {
         const error = new Error('DATABASE_URL is not configured');
         error.code = 'DATABASE_NOT_CONFIGURED';
@@ -58,8 +58,17 @@ export function clearSessionCookie() {
 }
 
 export async function ensureAdminSchema() {
-    if (adminSchemaReady) return;
-    const sql = getSql();
+    if (!adminSchemaPromise) {
+        adminSchemaPromise = initializeAdminSchema(getSql()).catch((error) => {
+            adminSchemaPromise = undefined;
+            throw error;
+        });
+    }
+    return adminSchemaPromise;
+}
+
+// Additive and idempotent; injectable SQL also lets tests use an isolated database.
+export async function initializeAdminSchema(sql) {
     await sql`
         CREATE TABLE IF NOT EXISTS admin_users (
             id uuid PRIMARY KEY,
@@ -102,7 +111,11 @@ export async function ensureAdminSchema() {
     await sql`CREATE INDEX IF NOT EXISTS admin_sessions_user_idx ON admin_sessions (user_id)`;
     await sql`CREATE INDEX IF NOT EXISTS admin_sessions_expiry_idx ON admin_sessions (expires_at)`;
     await sql`CREATE INDEX IF NOT EXISTS admin_invites_email_idx ON admin_invites (email)`;
-    adminSchemaReady = true;
+    await sql`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS auth_version integer NOT NULL DEFAULT 0`;
+    await sql`ALTER TABLE admin_sessions ADD COLUMN IF NOT EXISTS auth_version integer NOT NULL DEFAULT 0`;
+    await sql`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS password_reset_hash text`;
+    await sql`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS password_reset_expires_at timestamptz`;
+    await sql`CREATE UNIQUE INDEX IF NOT EXISTS admin_users_reset_hash_idx ON admin_users (password_reset_hash) WHERE password_reset_hash IS NOT NULL`;
 }
 
 async function passwordDigest(password, saltHex) {
@@ -110,7 +123,7 @@ async function passwordDigest(password, saltHex) {
     return Buffer.from(derived).toString('hex');
 }
 
-function validatePassword(password) {
+export function validatePassword(password) {
     const value = String(password || '');
     if (value.length < 12) {
         const error = new Error('Password must be at least 12 characters');
@@ -124,7 +137,7 @@ function validatePassword(password) {
     }
 }
 
-async function createPasswordRecord(password) {
+export async function createPasswordRecord(password) {
     validatePassword(password);
     const salt = crypto.randomBytes(16).toString('hex');
     const hash = await passwordDigest(password, salt);
@@ -138,22 +151,23 @@ async function verifyPassword(password, salt, expectedHash) {
     return left.length === right.length && crypto.timingSafeEqual(left, right);
 }
 
-async function issueSession(userId) {
-    await ensureAdminSchema();
-    const sql = getSql();
+export async function issueSession(userId, authVersion = 0, sql = getSql()) {
     const token = crypto.randomBytes(32).toString('base64url');
-    await sql`
-        INSERT INTO admin_sessions (id, user_id, token_hash, expires_at)
-        VALUES (${crypto.randomUUID()}, ${userId}, ${digest(token)}, now() + interval '7 days')
+    const rows = await sql`
+        INSERT INTO admin_sessions (id, user_id, token_hash, expires_at, auth_version)
+        SELECT ${crypto.randomUUID()}, id, ${digest(token)}, now() + interval '7 days', auth_version
+        FROM admin_users
+        WHERE id = ${userId} AND active = true AND auth_version = ${authVersion}
+        RETURNING id
     `;
+    if (!rows[0]) throw Object.assign(new Error('Invalid credentials'), { code: 'INVALID_CREDENTIALS' });
     return token;
 }
 
-export async function getAdminSession(req) {
-    await ensureAdminSchema();
+export async function getAdminSession(req, { sql = getSql(), ensureSchema = ensureAdminSchema } = {}) {
+    await ensureSchema();
     const token = parseCookies(req)[SESSION_COOKIE];
     if (!token) return null;
-    const sql = getSql();
     const rows = await sql`
         SELECT u.id, u.email, u.display_name, u.role, u.active, s.id AS session_id
         FROM admin_sessions s
@@ -161,6 +175,7 @@ export async function getAdminSession(req) {
         WHERE s.token_hash = ${digest(token)}
           AND s.expires_at > now()
           AND u.active = true
+          AND s.auth_version = u.auth_version
         LIMIT 1
     `;
     const user = rows[0];
@@ -174,13 +189,12 @@ export async function getAdminSession(req) {
     };
 }
 
-export async function loginAdmin(email, password) {
-    await ensureAdminSchema();
-    const sql = getSql();
+export async function loginAdmin(email, password, { sql = getSql(), ensureSchema = ensureAdminSchema } = {}) {
+    await ensureSchema();
     const normalized = normalizeEmail(email);
     const rows = await sql`
         SELECT id, email, display_name, role, active, password_salt, password_hash,
-               failed_login_count, locked_until
+               failed_login_count, locked_until, auth_version
         FROM admin_users
         WHERE email = ${normalized}
         LIMIT 1
@@ -205,19 +219,21 @@ export async function loginAdmin(email, password) {
             SET failed_login_count = ${nextFailures},
                 locked_until = CASE WHEN ${nextFailures} >= 5 THEN now() + interval '15 minutes' ELSE NULL END,
                 updated_at = now()
-            WHERE id = ${user.id}
+            WHERE id = ${user.id} AND auth_version = ${user.auth_version}
         `;
         const error = new Error('Invalid credentials');
         error.code = nextFailures >= 5 ? 'ACCOUNT_LOCKED' : 'INVALID_CREDENTIALS';
         throw error;
     }
 
-    await sql`
+    const updated = await sql`
         UPDATE admin_users
         SET failed_login_count = 0, locked_until = NULL, last_login_at = now(), updated_at = now()
-        WHERE id = ${user.id}
+        WHERE id = ${user.id} AND active = true AND auth_version = ${user.auth_version}
+        RETURNING id
     `;
-    const token = await issueSession(user.id);
+    if (!updated[0]) throw Object.assign(new Error('Invalid credentials'), { code: 'INVALID_CREDENTIALS' });
+    const token = await issueSession(user.id, user.auth_version, sql);
     return {
         token,
         user: { id: user.id, email: user.email, displayName: user.display_name, role: user.role },

@@ -35,12 +35,29 @@ CREATE TABLE IF NOT EXISTS orders (
     total_amount integer NOT NULL CHECK (total_amount >= 0),
 
     payment_provider text NOT NULL DEFAULT 'gopay',
+    payment_test_mode boolean NOT NULL DEFAULT false,
     payment_status text NOT NULL DEFAULT 'pending',
     gopay_payment_id text UNIQUE,
     gopay_state text,
     gopay_gateway_url text,
+    stripe_session_id text UNIQUE,
+    stripe_payment_intent_id text,
+    stripe_payment_status text,
+    stripe_gateway_url text,
+    terms_accepted_at timestamptz,
+    digital_consent_at timestamptz,
     paid_at timestamptz
 );
+
+-- Run these additive migrations on databases originally created for GoPay.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS stripe_session_id text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_test_mode boolean NOT NULL DEFAULT false;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS stripe_payment_intent_id text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS stripe_payment_status text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS stripe_gateway_url text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS terms_accepted_at timestamptz;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS digital_consent_at timestamptz;
+CREATE UNIQUE INDEX IF NOT EXISTS orders_stripe_session_id_idx ON orders (stripe_session_id);
 
 CREATE INDEX IF NOT EXISTS orders_created_at_idx ON orders (created_at DESC);
 CREATE INDEX IF NOT EXISTS orders_payment_status_idx ON orders (payment_status);

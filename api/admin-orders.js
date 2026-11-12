@@ -37,6 +37,11 @@ function mapOrder(row) {
         totalAmount: row.total_amount,
         payment: {
             status: row.payment_status,
+            provider: row.payment_provider,
+            testMode: row.payment_test_mode,
+            stripeSessionId: row.stripe_session_id,
+            stripePaymentIntentId: row.stripe_payment_intent_id,
+            stripeState: row.stripe_payment_status,
             gopayPaymentId: row.gopay_payment_id,
             gopayState: row.gopay_state,
             paidAt: row.paid_at,

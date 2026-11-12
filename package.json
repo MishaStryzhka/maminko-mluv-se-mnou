@@ -5,7 +5,14 @@
   "engines": {
     "node": ">=20"
   },
+  "scripts": {
+    "test": "node --test"
+  },
   "dependencies": {
-    "@neondatabase/serverless": "^1.0.0"
+    "@neondatabase/serverless": "^1.0.0",
+    "stripe": "^23.1.0"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.65.0"
   }
 }

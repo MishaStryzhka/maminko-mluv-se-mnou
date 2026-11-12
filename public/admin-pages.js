@@ -215,7 +215,9 @@ function renderOrdersPage() {
         tr.appendChild(cell(order.customer?.name, order.customer?.email));
         tr.appendChild(cell(order.productName, shippingName(order)));
         const paymentTd = document.createElement('td');
-        paymentTd.appendChild(badge('payment', order.payment?.status));
+        const paymentStatusBadge = badge('payment', order.payment?.status);
+        if (order.payment?.testMode) paymentStatusBadge.textContent = `TEST · ${paymentStatusBadge.textContent}`;
+        paymentTd.appendChild(paymentStatusBadge);
         tr.appendChild(paymentTd);
         const shippingTd = document.createElement('td');
         shippingTd.appendChild(badge('shipping', order.shipping?.status));
@@ -241,14 +243,18 @@ function renderOrderDetail(order) {
     setText('#detail-contact', `${order.customer?.email || '—'} · ${order.customer?.phone || '—'}`);
     setText('#detail-product', order.productName);
     setText('#detail-price', `${price(order.productPrice, order.currency)} + doprava ${price(order.shipping?.price, order.currency)} = ${price(order.totalAmount, order.currency)}`);
-    setText('#detail-payment', paymentLabel(order.payment?.status));
-    setText('#detail-gopay', order.payment?.gopayPaymentId ? `GoPay ID: ${order.payment.gopayPaymentId} · ${order.payment.gopayState || '—'}` : 'GoPay ID zatím není k dispozici');
+    setText('#detail-payment', `${order.payment?.testMode ? 'TEST · ' : ''}${paymentLabel(order.payment?.status)}`);
+    const payment = order.payment || {};
+    const paymentReference = payment.provider === 'stripe'
+        ? `Stripe ${payment.testMode ? '(TEST) ' : ''}${payment.stripeSessionId || 'bez ID'} · ${payment.stripeState || '—'}`
+        : payment.gopayPaymentId ? `GoPay ID: ${payment.gopayPaymentId} · ${payment.gopayState || '—'}` : 'Platební ID zatím není k dispozici';
+    setText('#detail-gateway', paymentReference);
     setText('#detail-shipping', shippingName(order));
     setText('#detail-destination', destination(order));
     const paymentBadge = document.querySelector('#detail-payment-badge');
     if (paymentBadge) {
         paymentBadge.className = `status ${statusClass('payment', order.payment?.status)}`;
-        paymentBadge.textContent = paymentLabel(order.payment?.status);
+        paymentBadge.textContent = `${order.payment?.testMode ? 'TEST · ' : ''}${paymentLabel(order.payment?.status)}`;
     }
     detail.classList.add('open');
     detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -376,7 +382,7 @@ async function loadSettings() {
         const data = await readJson(response);
         if (!response.ok) throw new Error();
         setText('#setting-db', data.databaseReady ? 'Připojeno' : 'Chybí DATABASE_URL');
-        setText('#setting-gopay', data.gopaySandboxReady ? (data.sandbox ? 'Sandbox připraven' : 'Připraven') : 'Není kompletní');
+        setText('#setting-stripe', data.stripeEnabled ? (data.sandbox ? 'Testovací režim připraven' : 'Produkční režim připraven') : 'Není aktivní');
         setText('#setting-pickup', data.shipping?.pickup == null ? '—' : price(data.shipping.pickup));
         setText('#setting-address', data.shipping?.address == null ? '—' : price(data.shipping.address));
     } catch {

@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
-import { insertOrder, attachGoPayPayment } from './_lib/db.js';
-import { createPayment } from './_lib/gopay.js';
+import { insertOrder, attachStripeSession } from './_lib/db.js';
+import { createStripeSession, stripeCheckoutReady, stripeConfiguration } from './_lib/stripe.js';
 
 const PRODUCTS = {
     full: { name: 'Kompletní balíček', price: 750 },
@@ -35,13 +35,6 @@ function shippingPrice(method) {
     return value;
 }
 
-function publicOrigin(req) {
-    if (process.env.PUBLIC_SITE_URL) return process.env.PUBLIC_SITE_URL.replace(/\/$/, '');
-    const proto = clean(req.headers['x-forwarded-proto'] || 'https', 10);
-    const host = clean(req.headers['x-forwarded-host'] || req.headers.host, 250);
-    return `${proto}://${host}`;
-}
-
 function validate(body) {
     if (!PRODUCTS[body.product]) return 'INVALID_PRODUCT';
     if (!['cs', 'uk'].includes(body.lang)) return 'INVALID_LANGUAGE';
@@ -49,6 +42,8 @@ function validate(body) {
     if (!clean(body.customer?.name, 120)) return 'NAME_REQUIRED';
     if (!/^\S+@\S+\.\S+$/.test(clean(body.customer?.email, 180))) return 'EMAIL_INVALID';
     if (!clean(body.customer?.phone, 50)) return 'PHONE_REQUIRED';
+    if (body.termsAccepted !== true) return 'TERMS_REQUIRED';
+    if (body.product === 'full' && body.digitalConsent !== true) return 'DIGITAL_CONSENT_REQUIRED';
     if (body.shipping === 'pickup' && !clean(body.pickup?.id, 80)) return 'PICKUP_REQUIRED';
     if (body.shipping === 'address') {
         if (!clean(body.address?.street, 180) || !clean(body.address?.city, 120) || !clean(body.address?.zip, 20)) {
@@ -73,6 +68,9 @@ export default async function handler(req, res) {
 
     const validationError = validate(body);
     if (validationError) return res.status(400).json({ error: validationError });
+    if (!stripeCheckoutReady()) {
+        return res.status(503).json({ error: 'PAYMENTS_NOT_READY' });
+    }
 
     try {
         const product = PRODUCTS[body.product];
@@ -106,18 +104,21 @@ export default async function handler(req, res) {
             addressZip: body.shipping === 'address' ? clean(body.address?.zip, 20) : null,
             addressCountry: body.shipping === 'address' ? 'CZ' : null,
             totalAmount: product.price + delivery,
+            paymentProvider: 'stripe',
+            paymentTestMode: stripeConfiguration().test,
+            digitalConsent: body.product === 'full',
         };
 
         await insertOrder(order);
 
         let payment;
         try {
-            payment = await createPayment(order, publicOrigin(req));
-            await attachGoPayPayment(orderNumber, payment);
+            payment = await createStripeSession(order);
+            await attachStripeSession(orderNumber, payment);
         } catch (error) {
-            console.error('GoPay create payment failed', error?.code || error?.message);
+            console.error('Stripe create payment failed', error?.code || error?.message);
             return res.status(502).json({
-                error: error?.code || 'PAYMENT_CREATE_FAILED',
+                error: 'PAYMENT_CREATE_FAILED',
                 orderNumber,
                 publicToken,
             });
@@ -131,8 +132,8 @@ export default async function handler(req, res) {
             totalAmount: order.totalAmount,
             payment: {
                 id: String(payment.id),
-                state: payment.state || null,
-                gatewayUrl: payment.gw_url,
+                state: payment.status,
+                gatewayUrl: payment.url,
             },
         });
     } catch (error) {

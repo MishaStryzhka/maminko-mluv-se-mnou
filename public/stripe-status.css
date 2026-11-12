@@ -1,0 +1,17 @@
+.btn:disabled {
+    opacity: .58;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn:disabled:hover { transform: none; }
+
+.paid-pill.pending {
+    background: #f3eef6;
+    color: #6f589c;
+}
+
+.success-icon.pending {
+    background: #f3eef6;
+    color: #6f589c;
+}

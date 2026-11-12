@@ -45,13 +45,29 @@ export async function ensureSchema() {
             address_country text,
             total_amount integer NOT NULL CHECK (total_amount >= 0),
             payment_provider text NOT NULL DEFAULT 'gopay',
+            payment_test_mode boolean NOT NULL DEFAULT false,
             payment_status text NOT NULL DEFAULT 'pending',
             gopay_payment_id text UNIQUE,
             gopay_state text,
             gopay_gateway_url text,
+            stripe_session_id text UNIQUE,
+            stripe_payment_intent_id text,
+            stripe_payment_status text,
+            stripe_gateway_url text,
+            terms_accepted_at timestamptz,
+            digital_consent_at timestamptz,
             paid_at timestamptz
         )
     `;
+    // Existing GoPay-era databases need additive migrations as well.
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS stripe_session_id text`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_test_mode boolean NOT NULL DEFAULT false`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS stripe_payment_intent_id text`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS stripe_payment_status text`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS stripe_gateway_url text`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS terms_accepted_at timestamptz`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS digital_consent_at timestamptz`;
+    await sql`CREATE UNIQUE INDEX IF NOT EXISTS orders_stripe_session_id_idx ON orders (stripe_session_id)`;
     schemaReady = true;
 }
 
@@ -65,7 +81,8 @@ export async function insertOrder(order) {
             shipping_method, shipping_price, pickup_point_id, pickup_point_name,
             pickup_point_zip, pickup_point_address, pickup_point_type,
             pickup_point_lat, pickup_point_lng, address_street, address_city,
-            address_zip, address_country, total_amount
+            address_zip, address_country, total_amount, payment_provider, payment_test_mode,
+            terms_accepted_at, digital_consent_at
         ) VALUES (
             ${order.id}, ${order.orderNumber}, ${order.publicToken}, ${order.lang},
             ${order.productCode}, ${order.productName}, ${order.productPrice},
@@ -74,7 +91,8 @@ export async function insertOrder(order) {
             ${order.pickupPointName}, ${order.pickupPointZip}, ${order.pickupPointAddress},
             ${order.pickupPointType}, ${order.pickupPointLat}, ${order.pickupPointLng},
             ${order.addressStreet}, ${order.addressCity}, ${order.addressZip},
-            ${order.addressCountry}, ${order.totalAmount}
+            ${order.addressCountry}, ${order.totalAmount}, ${order.paymentProvider || 'gopay'}, ${order.paymentTestMode || false},
+            now(), ${order.digitalConsent ? new Date().toISOString() : null}
         )
         RETURNING *
     `;
@@ -96,6 +114,54 @@ export async function attachGoPayPayment(orderNumber, payment) {
     return rows[0];
 }
 
+export async function attachStripeSession(orderNumber, session) {
+    await ensureSchema();
+    const sql = getSql();
+    const rows = await sql`
+        UPDATE orders
+        SET stripe_session_id = ${session.id},
+            stripe_payment_status = COALESCE(stripe_payment_status, ${session.payment_status || 'unpaid'}),
+            stripe_gateway_url = ${session.url || null},
+            updated_at = now()
+        WHERE order_number = ${orderNumber} AND payment_provider = 'stripe'
+          AND (stripe_session_id IS NULL OR stripe_session_id = ${session.id})
+        RETURNING *
+    `;
+    if (!rows[0]) throw new Error('Stripe session could not be linked to the order');
+    return rows[0];
+}
+
+// Only a signature-verified Stripe webhook may call this. Check the amount,
+// currency, order UUID, and session ID before changing a payment state.
+export async function updateStripePaymentState(session, nextStatus) {
+    await ensureSchema();
+    const sql = getSql();
+    const isPaid = nextStatus === 'paid';
+    const intent = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id || null;
+    const rows = await sql`
+        UPDATE orders
+        SET stripe_session_id = ${session.id},
+            stripe_payment_intent_id = COALESCE(${intent}, stripe_payment_intent_id),
+            stripe_payment_status = CASE WHEN payment_status = 'paid' THEN 'paid' ELSE ${session.payment_status || 'unpaid'} END,
+            payment_status = CASE
+                WHEN payment_status = 'paid' THEN 'paid'
+                WHEN ${nextStatus} = 'pending' AND payment_status IN ('failed', 'cancelled') THEN payment_status
+                ELSE ${nextStatus}
+            END,
+            shipping_status = CASE WHEN ${isPaid} AND NOT payment_test_mode THEN 'ready' ELSE shipping_status END,
+            paid_at = CASE WHEN ${isPaid} AND paid_at IS NULL THEN now() ELSE paid_at END,
+            updated_at = now()
+        WHERE order_number = ${session.client_reference_id}
+          AND id = ${session.metadata?.orderId || null}
+          AND payment_provider = 'stripe'
+          AND total_amount * 100 = ${session.amount_total}
+          AND lower(currency) = ${session.currency || ''}
+          AND (stripe_session_id IS NULL OR stripe_session_id = ${session.id})
+        RETURNING order_number
+    `;
+    return rows[0] || null;
+}
+
 export async function findOrderByPaymentId(paymentId) {
     await ensureSchema();
     const sql = getSql();
@@ -111,7 +177,7 @@ export async function findOrderByPublicToken(orderNumber, publicToken) {
                currency, shipping_method, shipping_price, shipping_status,
                pickup_point_name, pickup_point_zip, pickup_point_address,
                address_street, address_city, address_zip, address_country,
-               total_amount, payment_status, gopay_state, paid_at
+               total_amount, payment_status, payment_test_mode, gopay_state, stripe_payment_status, paid_at
         FROM orders
         WHERE order_number = ${orderNumber} AND public_token = ${publicToken}
         LIMIT 1
@@ -146,7 +212,8 @@ export async function listOrdersForAdmin(limit = 100) {
                shipping_method, shipping_price, shipping_status,
                pickup_point_id, pickup_point_name, pickup_point_zip, pickup_point_address,
                pickup_point_type, address_street, address_city, address_zip, address_country,
-               total_amount, payment_status, gopay_payment_id, gopay_state, paid_at
+               total_amount, payment_status, payment_provider, payment_test_mode, gopay_payment_id, gopay_state,
+               stripe_session_id, stripe_payment_intent_id, stripe_payment_status, paid_at
         FROM orders
         ORDER BY created_at DESC
         LIMIT ${safeLimit}

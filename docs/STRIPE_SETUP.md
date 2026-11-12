@@ -36,6 +36,15 @@ public checkout was a preview that did not save real orders.
    is disabled for this endpoint because signature verification needs the raw
    request bytes.
 
+   **Protected Preview deployments:** If Vercel Authentication protects the
+   preview domain, Stripe cannot deliver events to it unauthenticated. An
+   explicitly approved Vercel Automation Bypass token can be placed in the
+   webhook destination URL query string, per Vercel's documented Stripe webhook
+   method. That token bypasses protection across the project, not only this
+   route; keep it secret and do not disable project-wide protection casually.
+   Use a stable branch preview alias so webhook events keep reaching the
+   current deployment after a redeploy.
+
 4. Open the staging checkout, choose a product, shipping option, accept the
    published terms, and proceed to Stripe-hosted Checkout. Test with Stripe's
    published test-card scenarios. Confirm that the order is **pending** before

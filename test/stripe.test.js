@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Readable } from 'node:stream';
-import { buildStripeCheckoutParams, stripeCheckoutReady, stripeConfiguration, stripeClient } from '../api/_lib/stripe.js';
+import { buildStripeCheckoutParams, stripeCheckoutReady, stripeConfiguration, stripeClient, stripeWebhookClient } from '../api/_lib/stripe.js';
 import webhookHandler, { statusFromEvent } from '../api/stripe-webhook.js';
 
 const sample = {
@@ -64,6 +64,15 @@ test('Stripe is opt-in and live keys require an extra explicit switch', () => {
         process.env.STRIPE_SECRET_KEY = 'sk_test_example';
         delete process.env.STRIPE_ALLOW_LIVE;
         assert.equal(stripeConfiguration().enabled, true);
+        process.env.STRIPE_SECRET_KEY = 'rk_test_example';
+        assert.deepEqual({ ...stripeConfiguration() }, { enabled: true, test: true, live: false });
+        assert.ok(stripeWebhookClient());
+        process.env.STRIPE_SECRET_KEY = 'rk_live_example';
+        assert.equal(stripeConfiguration().enabled, false);
+        process.env.STRIPE_ALLOW_LIVE = 'true';
+        assert.equal(stripeConfiguration().enabled, true);
+        delete process.env.STRIPE_ALLOW_LIVE;
+        process.env.STRIPE_SECRET_KEY = 'rk_test_example';
         delete process.env.STRIPE_CHECKOUT_ENABLED;
         assert.equal(stripeConfiguration().enabled, false);
     } finally {

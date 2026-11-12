@@ -2,8 +2,10 @@ import Stripe from 'stripe';
 
 export function stripeConfiguration() {
     const key = process.env.STRIPE_SECRET_KEY || '';
-    const test = key.startsWith('sk_test_');
-    const live = key.startsWith('sk_live_');
+    // Stripe restricted keys (rk_*) work with Checkout Sessions too. Treat
+    // them as the same environment, preserving the explicit live guard.
+    const test = key.startsWith('sk_test_') || key.startsWith('rk_test_');
+    const live = key.startsWith('sk_live_') || key.startsWith('rk_live_');
     const enabled = process.env.STRIPE_CHECKOUT_ENABLED === 'true'
         && (test || (live && process.env.STRIPE_ALLOW_LIVE === 'true'));
     return { enabled, test, live };
@@ -40,7 +42,7 @@ export function stripeClient() {
 // new-checkout switch is turned off while those payments are settling.
 export function stripeWebhookClient() {
     const key = process.env.STRIPE_SECRET_KEY || '';
-    if (!key.startsWith('sk_test_') && !key.startsWith('sk_live_')) {
+    if (!stripeConfiguration().test && !stripeConfiguration().live) {
         const error = new Error('Stripe webhook is not configured');
         error.code = 'WEBHOOK_NOT_CONFIGURED';
         throw error;

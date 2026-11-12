@@ -17,7 +17,7 @@ public checkout was a preview that did not save real orders.
    |---|---|
    | `DATABASE_URL` | Neon PostgreSQL connection string |
    | `PUBLIC_SITE_URL` | Exact public HTTPS origin of the staging site, no path |
-   | `STRIPE_SECRET_KEY` | Stripe **test** secret key, `sk_test_…` |
+   | `STRIPE_SECRET_KEY` | Stripe **test** secret key, `sk_test_…` or restricted `rk_test_…` with Checkout Sessions write permission |
    | `STRIPE_CHECKOUT_ENABLED` | `true` only while testing |
    | `STRIPE_WEBHOOK_SECRET` | Test event destination signing secret, `whsec_…` |
    | `STRIPE_ALLOW_LIVE` | Leave unset/`false` |
@@ -55,7 +55,7 @@ public checkout was a preview that did not save real orders.
   launch blocker until the business process is implemented and verified.
 - Confirm the correct production domain and database, then configure a
   **separate live** webhook destination and `whsec_…` secret.
-- Switch to `sk_live_…`, set `STRIPE_CHECKOUT_ENABLED=true` and additionally
+- Switch to `sk_live_…` (or suitably scoped `rk_live_…`), set `STRIPE_CHECKOUT_ENABLED=true` and additionally
   `STRIPE_ALLOW_LIVE=true`. This extra opt-in prevents accidental live payments
   merely by entering a live secret key.
 - Run a small **authorized real payment** and verify the signed webhook,

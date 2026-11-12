@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { smtpConfigurationReady } from './confirmation-email.js';
 
 export function stripeConfiguration() {
     const key = process.env.STRIPE_SECRET_KEY || '';
@@ -26,7 +27,8 @@ export function stripeCheckoutReady() {
     if (!stripeConfiguration().enabled) return false;
     try { publicOrigin(process.env.PUBLIC_SITE_URL); } catch { return false; }
     return Boolean(process.env.DATABASE_URL)
-        && Boolean(process.env.STRIPE_WEBHOOK_SECRET);
+        && Boolean(process.env.STRIPE_WEBHOOK_SECRET)
+        && (stripeConfiguration().test || smtpConfigurationReady());
 }
 
 export function stripeClient() {

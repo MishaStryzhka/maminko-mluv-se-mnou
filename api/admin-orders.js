@@ -35,6 +35,11 @@ function mapOrder(row) {
             } : null,
         },
         totalAmount: row.total_amount,
+        confirmationEmail: {
+            status: row.confirmation_email_status,
+            attempts: row.confirmation_email_attempts,
+            sentAt: row.confirmation_email_sent_at,
+        },
         payment: {
             status: row.payment_status,
             provider: row.payment_provider,
@@ -68,7 +73,7 @@ export default async function handler(req, res) {
         const rows = await listOrdersForAdmin(limit);
         return res.status(200).json({ orders: rows.map(mapOrder) });
     } catch (error) {
-        console.error('Admin orders failed', error?.code || error?.message);
+        console.error('Admin orders failed', /^[A-Z0-9_]+$/.test(error?.code || '') ? error.code : 'ADMIN_ORDERS_FAILED');
         if (error?.code === 'DATABASE_NOT_CONFIGURED') {
             return res.status(503).json({ error: error.code });
         }

@@ -1,5 +1,6 @@
-import { stripeWebhookClient } from './_lib/stripe.js';
+import { stripeConfiguration, stripeWebhookClient } from './_lib/stripe.js';
 import { updateStripePaymentState } from './_lib/db.js';
+import { deliverPaidConfirmation } from './_lib/order-confirmation.js';
 
 // Vercel must leave the body untouched for signature verification.
 export const config = { api: { bodyParser: false } };
@@ -31,6 +32,15 @@ export function statusFromEvent(event) {
     }
 }
 
+export function eventModeMatches(event) {
+    const session = event.data?.object;
+    const { test, live } = stripeConfiguration();
+    return typeof event.livemode === 'boolean'
+        && typeof session?.livemode === 'boolean'
+        && event.livemode === session.livemode
+        && ((event.livemode && live) || (!event.livemode && test));
+}
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         res.setHeader('Allow', 'POST');
@@ -42,13 +52,15 @@ export default async function handler(req, res) {
     try {
         const stripe = stripeWebhookClient();
         event = stripe.webhooks.constructEvent(await rawBody(req), req.headers['stripe-signature'], process.env.STRIPE_WEBHOOK_SECRET);
-    } catch (error) {
-        console.warn('Stripe webhook signature invalid:', error.message);
+    } catch {
+        // Signature errors may include request contents. Do not log payloads.
+        console.warn('Stripe webhook signature invalid: WEBHOOK_INVALID');
         return res.status(400).json({ error: 'WEBHOOK_INVALID' });
     }
 
     const status = statusFromEvent(event);
     if (!status) return res.status(200).json({ received: true });
+    if (!eventModeMatches(event)) return res.status(400).json({ error: 'WEBHOOK_MODE_MISMATCH' });
 
     try {
         const session = event.data.object;
@@ -57,9 +69,13 @@ export default async function handler(req, res) {
             console.error('Stripe webhook unmatched order', event.id);
             return res.status(500).json({ error: 'ORDER_RECONCILIATION_FAILED' });
         }
+        // Live email gates fulfillment. Preview may send explicitly enabled
+        // TEST receipts only to the shop's own inbox, never arbitrary customers.
+        if (status === 'paid') await deliverPaidConfirmation(order);
         return res.status(200).json({ received: true });
     } catch (error) {
-        console.error('Stripe webhook processing failed', error?.code || error?.message);
+        // SMTP error messages may contain addresses/server responses.
+        console.error('Stripe webhook processing failed', /^[A-Z0-9_]+$/.test(error?.code || '') ? error.code : 'PROCESSING_ERROR');
         return res.status(500).json({ error: 'WEBHOOK_PROCESSING_FAILED' });
     }
 }

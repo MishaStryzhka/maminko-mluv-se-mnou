@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { insertOrder, attachStripeSession } from './_lib/db.js';
 import { createStripeSession, stripeCheckoutReady, stripeConfiguration } from './_lib/stripe.js';
+import { validRecipient } from './_lib/confirmation-email.js';
 
 const PRODUCTS = {
     full: { name: 'Kompletní balíček', price: 750 },
@@ -40,7 +41,7 @@ function validate(body) {
     if (!['cs', 'uk'].includes(body.lang)) return 'INVALID_LANGUAGE';
     if (!['pickup', 'address'].includes(body.shipping)) return 'INVALID_SHIPPING';
     if (!clean(body.customer?.name, 120)) return 'NAME_REQUIRED';
-    if (!/^\S+@\S+\.\S+$/.test(clean(body.customer?.email, 180))) return 'EMAIL_INVALID';
+    if (typeof body.customer?.email !== 'string' || !validRecipient(body.customer.email.trim())) return 'EMAIL_INVALID';
     if (!clean(body.customer?.phone, 50)) return 'PHONE_REQUIRED';
     if (body.termsAccepted !== true) return 'TERMS_REQUIRED';
     if (body.product === 'full' && body.digitalConsent !== true) return 'DIGITAL_CONSENT_REQUIRED';
@@ -88,7 +89,7 @@ export default async function handler(req, res) {
             productName: product.name,
             productPrice: product.price,
             customerName: clean(body.customer.name, 120),
-            customerEmail: clean(body.customer.email, 180).toLowerCase(),
+            customerEmail: body.customer.email.trim().toLowerCase(),
             customerPhone: clean(body.customer.phone, 50),
             shippingMethod: body.shipping,
             shippingPrice: delivery,
@@ -116,7 +117,7 @@ export default async function handler(req, res) {
             payment = await createStripeSession(order);
             await attachStripeSession(orderNumber, payment);
         } catch (error) {
-            console.error('Stripe create payment failed', error?.code || error?.message);
+            console.error('Stripe create payment failed', /^[A-Z0-9_]+$/.test(error?.code || '') ? error.code : 'PAYMENT_CREATE_FAILED');
             return res.status(502).json({
                 error: 'PAYMENT_CREATE_FAILED',
                 orderNumber,
@@ -137,7 +138,7 @@ export default async function handler(req, res) {
             },
         });
     } catch (error) {
-        console.error('Checkout failed', error?.code || error?.message);
+        console.error('Checkout failed', /^[A-Z0-9_]+$/.test(error?.code || '') ? error.code : 'CHECKOUT_FAILED');
         const configurationErrors = new Set([
             'DATABASE_NOT_CONFIGURED',
             'SHIPPING_CONFIG_INVALID',

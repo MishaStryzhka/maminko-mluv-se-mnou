@@ -46,6 +46,11 @@ CREATE TABLE IF NOT EXISTS orders (
     stripe_gateway_url text,
     terms_accepted_at timestamptz,
     digital_consent_at timestamptz,
+    confirmation_email_status text NOT NULL DEFAULT 'pending',
+    confirmation_email_claim_id text,
+    confirmation_email_claimed_at timestamptz,
+    confirmation_email_attempts integer NOT NULL DEFAULT 0,
+    confirmation_email_sent_at timestamptz,
     paid_at timestamptz
 );
 
@@ -57,6 +62,11 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS stripe_payment_status text;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS stripe_gateway_url text;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS terms_accepted_at timestamptz;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS digital_consent_at timestamptz;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS confirmation_email_status text NOT NULL DEFAULT 'pending';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS confirmation_email_claim_id text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS confirmation_email_claimed_at timestamptz;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS confirmation_email_attempts integer NOT NULL DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS confirmation_email_sent_at timestamptz;
 CREATE UNIQUE INDEX IF NOT EXISTS orders_stripe_session_id_idx ON orders (stripe_session_id);
 
 CREATE INDEX IF NOT EXISTS orders_created_at_idx ON orders (created_at DESC);

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Readable } from 'node:stream';
 import { buildStripeCheckoutParams, stripeCheckoutReady, stripeConfiguration, stripeClient, stripeWebhookClient } from '../api/_lib/stripe.js';
-import webhookHandler, { statusFromEvent } from '../api/stripe-webhook.js';
+import webhookHandler, { eventModeMatches, statusFromEvent } from '../api/stripe-webhook.js';
 
 const sample = {
     id: 'a52b09d8-87cf-4448-994a-0c93f5f45f90',
@@ -137,6 +137,100 @@ test('Webhook rejects an unsigned request before any database update', async () 
         try { await webhookHandler(req, res); } finally { console.warn = oldWarn; }
         assert.equal(res.statusCode, 400);
         assert.equal(res.payload.error, 'WEBHOOK_INVALID');
+    } finally {
+        if (originalKey === undefined) delete process.env.STRIPE_SECRET_KEY;
+        else process.env.STRIPE_SECRET_KEY = originalKey;
+        if (originalSecret === undefined) delete process.env.STRIPE_WEBHOOK_SECRET;
+        else process.env.STRIPE_WEBHOOK_SECRET = originalSecret;
+    }
+});
+
+test('Live Checkout requires approved SMTP configuration while test Checkout does not', () => {
+    const keys = ['STRIPE_SECRET_KEY', 'STRIPE_CHECKOUT_ENABLED', 'STRIPE_ALLOW_LIVE', 'STRIPE_WEBHOOK_SECRET', 'DATABASE_URL', 'PUBLIC_SITE_URL', 'SMTP_USER', 'SMTP_APP_PASSWORD'];
+    const original = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
+    try {
+        Object.assign(process.env, {
+            STRIPE_SECRET_KEY: 'sk_live_example',
+            STRIPE_CHECKOUT_ENABLED: 'true',
+            STRIPE_ALLOW_LIVE: 'true',
+            STRIPE_WEBHOOK_SECRET: 'whsec_example',
+            DATABASE_URL: 'postgres://example',
+            PUBLIC_SITE_URL: 'https://example.cz',
+        });
+        delete process.env.SMTP_USER;
+        delete process.env.SMTP_APP_PASSWORD;
+        assert.equal(stripeCheckoutReady(), false);
+        process.env.SMTP_USER = 'info@maminko-mluv-se-mnou.cz';
+        assert.equal(stripeCheckoutReady(), false);
+        process.env.SMTP_APP_PASSWORD = 'test-only-not-a-real-password';
+        assert.equal(stripeCheckoutReady(), true);
+        process.env.SMTP_USER = 'glamgarbrentals@seznam.cz';
+        assert.equal(stripeCheckoutReady(), false);
+        process.env.SMTP_USER = 'info@maminko-mluv-se-mnou.cz';
+        process.env.STRIPE_ALLOW_LIVE = 'false';
+        assert.equal(stripeCheckoutReady(), false);
+        process.env.STRIPE_SECRET_KEY = 'rk_test_example';
+        delete process.env.SMTP_USER;
+        delete process.env.SMTP_APP_PASSWORD;
+        assert.equal(stripeCheckoutReady(), true);
+    } finally {
+        for (const [key, value] of Object.entries(original)) {
+            if (value === undefined) delete process.env[key];
+            else process.env[key] = value;
+        }
+    }
+});
+
+test('Webhook requires matching strict event/session mode and configured key mode', () => {
+    const originalKey = process.env.STRIPE_SECRET_KEY;
+    const event = (livemode, sessionMode) => ({ livemode, data: { object: { livemode: sessionMode } } });
+    try {
+        for (const key of ['sk_test_example', 'rk_test_example']) {
+            process.env.STRIPE_SECRET_KEY = key;
+            assert.equal(eventModeMatches(event(false, false)), true);
+            assert.equal(eventModeMatches(event(true, true)), false);
+            for (const invalid of [event(false, true), event(true, false), event(undefined, false), event(false, undefined), event('false', false), event(false, 'false'), event(null, null), { livemode: false }, { livemode: false, data: { object: null } }]) {
+                assert.equal(eventModeMatches(invalid), false);
+            }
+        }
+        for (const key of ['sk_live_example', 'rk_live_example']) {
+            process.env.STRIPE_SECRET_KEY = key;
+            assert.equal(eventModeMatches(event(true, true)), true);
+            assert.equal(eventModeMatches(event(false, false)), false);
+        }
+        process.env.STRIPE_SECRET_KEY = 'invalid-key';
+        assert.equal(eventModeMatches(event(false, false)), false);
+        assert.equal(eventModeMatches(event(true, true)), false);
+    } finally {
+        if (originalKey === undefined) delete process.env.STRIPE_SECRET_KEY;
+        else process.env.STRIPE_SECRET_KEY = originalKey;
+    }
+});
+
+test('Signed webhook with mismatched mode is rejected before database access', async () => {
+    const originalKey = process.env.STRIPE_SECRET_KEY;
+    const originalSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    try {
+        process.env.STRIPE_SECRET_KEY = 'sk_test_placeholder';
+        process.env.STRIPE_WEBHOOK_SECRET = 'whsec_placeholder';
+        const payload = JSON.stringify({
+            id: 'evt_offline_mode_test',
+            type: 'checkout.session.completed',
+            livemode: true,
+            data: { object: { payment_status: 'paid', livemode: true } },
+        });
+        const signature = stripeWebhookClient().webhooks.generateTestHeaderString({ payload, secret: process.env.STRIPE_WEBHOOK_SECRET });
+        const req = Readable.from([Buffer.from(payload)]);
+        req.method = 'POST';
+        req.headers = { 'stripe-signature': signature };
+        const res = {
+            statusCode: 200,
+            status(code) { this.statusCode = code; return this; },
+            json(value) { this.payload = value; return this; },
+        };
+        await webhookHandler(req, res);
+        assert.equal(res.statusCode, 400);
+        assert.equal(res.payload.error, 'WEBHOOK_MODE_MISMATCH');
     } finally {
         if (originalKey === undefined) delete process.env.STRIPE_SECRET_KEY;
         else process.env.STRIPE_SECRET_KEY = originalKey;

@@ -56,6 +56,11 @@ export async function ensureSchema() {
             stripe_gateway_url text,
             terms_accepted_at timestamptz,
             digital_consent_at timestamptz,
+            confirmation_email_status text NOT NULL DEFAULT 'pending',
+            confirmation_email_claim_id text,
+            confirmation_email_claimed_at timestamptz,
+            confirmation_email_attempts integer NOT NULL DEFAULT 0,
+            confirmation_email_sent_at timestamptz,
             paid_at timestamptz
         )
     `;
@@ -67,6 +72,11 @@ export async function ensureSchema() {
     await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS stripe_gateway_url text`;
     await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS terms_accepted_at timestamptz`;
     await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS digital_consent_at timestamptz`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS confirmation_email_status text NOT NULL DEFAULT 'pending'`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS confirmation_email_claim_id text`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS confirmation_email_claimed_at timestamptz`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS confirmation_email_attempts integer NOT NULL DEFAULT 0`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS confirmation_email_sent_at timestamptz`;
     await sql`CREATE UNIQUE INDEX IF NOT EXISTS orders_stripe_session_id_idx ON orders (stripe_session_id)`;
     schemaReady = true;
 }
@@ -148,18 +158,97 @@ export async function updateStripePaymentState(session, nextStatus) {
                 WHEN ${nextStatus} = 'pending' AND payment_status IN ('failed', 'cancelled') THEN payment_status
                 ELSE ${nextStatus}
             END,
-            shipping_status = CASE WHEN ${isPaid} AND NOT payment_test_mode THEN 'ready' ELSE shipping_status END,
             paid_at = CASE WHEN ${isPaid} AND paid_at IS NULL THEN now() ELSE paid_at END,
             updated_at = now()
         WHERE order_number = ${session.client_reference_id}
           AND id = ${session.metadata?.orderId || null}
           AND payment_provider = 'stripe'
+          AND payment_test_mode = ${session.livemode === false}
           AND total_amount * 100 = ${session.amount_total}
           AND lower(currency) = ${session.currency || ''}
           AND (stripe_session_id IS NULL OR stripe_session_id = ${session.id})
-        RETURNING order_number
+        RETURNING order_number, payment_test_mode, customer_email
     `;
     return rows[0] || null;
+}
+
+// Claim a paid order before SMTP. The claim prevents concurrent webhook
+// deliveries from sending the same confirmation twice. A stale claim can be
+// recovered when Stripe retries after a function crash.
+export async function claimPaidConfirmation(orderNumber, claimId, allowTest = false) {
+    await ensureSchema();
+    const sql = getSql();
+    const rows = await sql`
+        UPDATE orders
+        SET confirmation_email_status = 'sending',
+            confirmation_email_claim_id = ${claimId},
+            confirmation_email_claimed_at = now(),
+            confirmation_email_attempts = confirmation_email_attempts + 1,
+            updated_at = now()
+        WHERE order_number = ${orderNumber}
+          AND payment_provider = 'stripe'
+          AND payment_status = 'paid'
+          AND (NOT payment_test_mode OR (${allowTest === true}
+               AND lower(customer_email) = 'info@maminko-mluv-se-mnou.cz'))
+          AND (
+            confirmation_email_status IN ('pending', 'failed')
+            OR (confirmation_email_status = 'sending'
+                AND confirmation_email_claimed_at < now() - interval '10 minutes')
+          )
+        RETURNING order_number, customer_name, customer_email, lang, payment_test_mode,
+                  product_code, product_name, product_price, shipping_method,
+                  shipping_price, pickup_point_name, pickup_point_address,
+                  pickup_point_zip, address_street, address_city, address_zip,
+                  total_amount
+    `;
+    return rows[0] || null;
+}
+
+export async function getConfirmationState(orderNumber) {
+    await ensureSchema();
+    const sql = getSql();
+    const rows = await sql`
+        SELECT confirmation_email_status FROM orders
+        WHERE order_number = ${orderNumber} AND payment_provider = 'stripe'
+        LIMIT 1
+    `;
+    return rows[0] || null;
+}
+
+export async function markConfirmationSent(orderNumber, claimId) {
+    await ensureSchema();
+    const sql = getSql();
+    const rows = await sql`
+        UPDATE orders
+        SET confirmation_email_status = 'sent',
+            confirmation_email_claim_id = NULL,
+            confirmation_email_claimed_at = NULL,
+            confirmation_email_sent_at = now(),
+            shipping_status = CASE WHEN NOT payment_test_mode AND payment_status = 'paid'
+                                   AND shipping_status = 'not_ready' THEN 'ready' ELSE shipping_status END,
+            updated_at = now()
+        WHERE order_number = ${orderNumber}
+          AND confirmation_email_status = 'sending'
+          AND confirmation_email_claim_id = ${claimId}
+        RETURNING order_number
+    `;
+    if (!rows[0]) throw new Error('Confirmation email claim was lost');
+    return rows[0];
+}
+
+export async function releaseConfirmationClaim(orderNumber, claimId) {
+    await ensureSchema();
+    const sql = getSql();
+    await sql`
+        UPDATE orders
+        SET confirmation_email_status = 'failed',
+            confirmation_email_claim_id = NULL,
+            confirmation_email_claimed_at = NULL,
+            updated_at = now()
+        WHERE order_number = ${orderNumber}
+          AND confirmation_email_status = 'sending'
+          AND confirmation_email_claim_id = ${claimId}
+    `;
 }
 
 export async function findOrderByPaymentId(paymentId) {
@@ -213,7 +302,8 @@ export async function listOrdersForAdmin(limit = 100) {
                pickup_point_id, pickup_point_name, pickup_point_zip, pickup_point_address,
                pickup_point_type, address_street, address_city, address_zip, address_country,
                total_amount, payment_status, payment_provider, payment_test_mode, gopay_payment_id, gopay_state,
-               stripe_session_id, stripe_payment_intent_id, stripe_payment_status, paid_at
+               stripe_session_id, stripe_payment_intent_id, stripe_payment_status, paid_at,
+               confirmation_email_status, confirmation_email_attempts, confirmation_email_sent_at
         FROM orders
         ORDER BY created_at DESC
         LIMIT ${safeLimit}

@@ -251,6 +251,11 @@ function renderOrderDetail(order) {
     setText('#detail-gateway', paymentReference);
     setText('#detail-shipping', shippingName(order));
     setText('#detail-destination', destination(order));
+    const email = order.confirmationEmail || {};
+    const emailLabels = { pending: 'ČEKÁ', sending: 'ODESÍLÁ SE', sent: 'PŘIJATO SMTP SERVEREM', failed: 'CHYBA — ČEKÁ NA OPAKOVÁNÍ' };
+    const testSuppressed = order.payment?.testMode && !email.attempts;
+    setText('#detail-email', testSuppressed ? 'TEST — E-MAIL NEODESLÁN' : emailLabels[email.status] || '—');
+    setText('#detail-email-attempts', `Pokusy: ${email.attempts || 0}${email.sentAt ? ` · ${dateLabel(email.sentAt)}` : ''}`);
     const paymentBadge = document.querySelector('#detail-payment-badge');
     if (paymentBadge) {
         paymentBadge.className = `status ${statusClass('payment', order.payment?.status)}`;

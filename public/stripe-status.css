@@ -15,3 +15,14 @@
     background: #f3eef6;
     color: #6f589c;
 }
+
+.success-shell [hidden] { display: none !important; }
+.success-card-head { flex-wrap: wrap; }
+.paid-pill.refund { max-width: 240px; line-height: 1.5; background: #f3eef6; color: #6f589c; }
+.refund-summary { margin-top: 18px; padding: 16px; border: 1px solid #e4dbe8; border-radius: 14px; background: #faf7fc; }
+.refund-summary h2 { margin: 0 0 12px; color: #554369; font-size: 16px; }
+.refund-summary dl { display: flex; flex-wrap: wrap; gap: 18px 32px; margin: 0; }
+.refund-summary dl > div { display: grid; gap: 5px; }
+.refund-summary dt { color: #716977; font-size: 12px; }
+.refund-summary dd { margin: 0; color: #3c3440; font-size: 16px; font-weight: 700; }
+.refund-summary p { margin: 14px 0 0; padding: 12px; background: #fff4df; color: #755024; border-radius: 9px; font-size: 13px; line-height: 1.5; }

@@ -28,12 +28,19 @@ public checkout was a preview that did not save real orders.
    | `ORDER_EMAIL_TEST_ENABLED` | Leave `false` except for the owner-only email smoke test below |
 
 3. In Stripe **test mode**, register a webhook/event destination pointing to
-   `https://<staging-origin>/api/stripe-webhook`, for these four events:
+   `https://<staging-origin>/api/stripe-webhook`, for these seven events:
 
    - `checkout.session.completed`
    - `checkout.session.async_payment_succeeded`
    - `checkout.session.async_payment_failed`
    - `checkout.session.expired`
+   - `refund.created`
+   - `refund.updated`
+   - `refund.failed`
+
+   Existing destinations configured with only the four Checkout events must be
+   updated before the refund integration can be verified. Do not assume a code
+   deployment changes the Stripe destination's selected events.
 
    Use the signing secret for **that exact destination**. Vercel's body parser
    is disabled for this endpoint because signature verification needs the raw
@@ -116,8 +123,89 @@ does not prove inbox delivery; check the actual inbox and authentication headers
   orders and resend the original signed event through Stripe after correcting
   the problem. Do not manually mark a failed email as sent to bypass the gate.
 - For live orders only, successful SMTP acceptance unlocks `shipping_status`
-  from `not_ready` to `ready`. Payment status remains `paid` even if email fails;
+  from `not_ready` to `ready`, provided no refund evidence/hold exists.
+  Payment status remains `paid` even if email fails;
   delayed email must never trigger another customer charge.
+
+## Passive refund reconciliation
+
+Refunds are **issued by the owner in Stripe**, not by a new site button or public
+API. The site consumes signature-verified `refund.created`, `refund.updated`, and
+`refund.failed` snapshots. Unlike Checkout Session, the Refund object has no
+`livemode` field; mode is checked on the signed event and the bound local order.
+`charge.refunded` is intentionally not the reconciliation source: it does not
+provide the complete lifecycle of each refund, and its refunds list need not be
+expanded. No additional Stripe API permissions or provider reads are required.
+
+- Match the existing PaymentIntent, test/live mode, currency and minor-unit
+  amount. Each refund ID is globally bound to one immutable intent/charge/amount
+  tuple per mode; it cannot be copied onto another order.
+- Store minimal signed evidence before applying the order snapshot. Evidence
+  arriving before Checkout linkage returns a retryable webhook error, but is
+  already consulted by paid reconciliation and SMTP claim/finalization. It
+  therefore prevents readiness from opening while waiting for Stripe's retry.
+- Apply each refund to the currently locked order row. Duplicate/older snapshots
+  do not add the amount again. Compare `event.created`; within the same second,
+  failed/canceled outrank succeeded, which outranks non-final states. This is a
+  deterministic, conservative snapshot rule, not a provider re-fetch. Ambiguous
+  non-final states remain held for review.
+- Track pending/requires-action, succeeded, failed and canceled separately.
+  Only succeeded amounts count as returned. Full and partial returned amounts
+  are distinct and preserve haléře. Impossible active totals are held for review,
+  never rendered as a valid refund or made eligible for fulfillment.
+- The stored `payment_status='paid'` remains the original captured-payment fact.
+  Both public and admin APIs project effective refund states from current signed
+  evidence. Public status exposes amounts/status only, not refund IDs, raw events,
+  PaymentIntent identifiers or credentials.
+- Any refund event places an order on a durable fulfillment hold. `ready` becomes
+  `not_ready`; existing `sent`/`delivered` facts are preserved. Failed, canceled
+  and partial refunds **do not automatically release** this hold. Review the
+  order in Stripe and resolve fulfillment separately; this release deliberately
+  adds no hold-clearing or refund-issuing action.
+- A late paid-event replay cannot erase refund evidence, unlock shipping or send
+  a new paid receipt. If SMTP was already in flight when the refund arrived, the
+  accepted historical receipt is still recorded as `sent`, but shipping stays
+  held. An email already accepted by SMTP cannot be recalled.
+- Net-received admin figures exclude TEST orders and subtract only succeeded
+  refunds. They summarize loaded orders, not an accounting ledger or Stripe
+  payout reconciliation. Pending refunds do not reduce the displayed received
+  amount; they have their own status and amount. A refund under review displays
+  unknown amounts rather than a definite zero. If any loaded live paid order
+  needs review, the net figure is also marked for review rather than asserted.
+
+### Cancellation and failure semantics
+
+Returning from Stripe with the Cancel link only shows a cancellation notice;
+it does not prove the session expired and does not cancel a database payment.
+The signed `checkout.session.expired` event transitions an unpaid order to
+`cancelled`. A declined card can be retried within the same Checkout session;
+do not treat a single card decline as terminal order failure. The supported
+terminal failure is `checkout.session.async_payment_failed`. Earlier pending,
+failed or expired snapshots cannot overwrite an already captured payment.
+
+### Remaining deployed acceptance checks
+
+The previous owner-only TEST email was received in Seznam; admin now confirms
+one SMTP attempt and no fulfillment eligibility. The new refund path still
+requires enabling the three refund event types on the existing **Sandbox**
+destination and checking partial/full refund, replay and order/admin state.
+Local PGlite tests exercise actual SQL and rollback-safe holds, and signed
+handler tests use offline Stripe HMAC verification; neither substitutes for
+the deployed provider test. Production/live activation remains a separate
+owner decision. Preview and Production currently share the database: these
+schema changes are additive, but old Production code does not render the new
+refund projection until a separately approved production release.
+
+Offline verification on **13 November 2026**: `npm test` completed with **151
+tests, 149 passed, 0 failed, 2 optional Chromium checkout tests skipped**. This
+includes SQL reconciliation against isolated PGlite databases, real offline
+Stripe signature verification, and Czech/Ukrainian refund UI checks. The two
+skipped browser checks and the deployed Stripe Sandbox refund flow are not
+claimed as verified by this result.
+
+Primary references: [Stripe refund lifecycle](https://docs.stripe.com/refunds),
+[Refund fields](https://docs.stripe.com/api/refunds/object),
+[Webhook delivery/order semantics](https://docs.stripe.com/webhooks).
 
 ## Production launch — separate later decision
 

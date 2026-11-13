@@ -24,7 +24,7 @@
             <h1 data-i18n="title">Stav objednávky</h1>
             <p class="success-lead" data-i18n="lead">Ověřujeme stav platby. Objednávka se připraví až po jejím potvrzení.</p>
 
-            <div class="simulation-box">
+            <div class="simulation-box" role="status" aria-live="polite">
                 <strong data-i18n="simulationTitle">Čekáme na potvrzení Stripe</strong>
                 <span data-i18n="simulationCopy">Platba se potvrzuje automaticky. Pokud jste právě zaplatili, chvíli prosím vyčkejte.</span>
             </div>
@@ -59,6 +59,14 @@
                         <small data-i18n="nextCopy">Po potvrzení platby začneme objednávku připravovat. O odeslání vás budeme informovat.</small>
                     </div>
                 </div>
+                <section id="refund-summary" class="refund-summary" aria-labelledby="refund-summary-title" hidden>
+                    <h2 id="refund-summary-title" data-i18n="refundSummary">Vrácení platby</h2>
+                    <dl>
+                        <div><dt data-i18n="refundedAmount">Potvrzeně vráceno</dt><dd id="refund-refunded">—</dd></div>
+                        <div><dt data-i18n="refundPendingAmount">Čeká na vrácení</dt><dd id="refund-pending">—</dd></div>
+                    </dl>
+                    <p id="refund-hold" data-i18n="refundHold" role="status" hidden>Další zpracování objednávky je pozastaveno kvůli vrácení platby. Odeslání nyní nepotvrzujeme.</p>
+                </section>
             </section>
 
             <div class="success-actions">

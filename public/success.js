@@ -32,6 +32,24 @@ const COPY = {
         home: 'Zpět na hlavní stránku',
         pickup: 'Balíkovna / BOX',
         address: 'Balíkovna na adresu',
+        refundLead: 'Zde najdete aktuální stav vrácení platby. Objednávku znovu neplaťte.',
+        testRefundLead: 'Jde o testovací platbu a testovací vrácení peněz. Nic neplaťte; objednávku neexpedujte.',
+        refundSummary: 'Vrácení platby',
+        refundedAmount: 'Potvrzeně vráceno',
+        refundPendingAmount: 'Čeká na vrácení',
+        refundAmountUnknown: 'Ověřuje se',
+        refundNextTitle: 'Další postup',
+        refundNextCopy: 'Pokud řešíte doručení nebo vrácení zboží, kontaktujte nás. Z tohoto stavu nelze potvrdit odeslání zásilky.',
+        refundHold: 'Další zpracování objednávky je pozastaveno kvůli vrácení platby. Odeslání nyní nepotvrzujeme.',
+        refunds: {
+            full: { badge: 'VRÁCENO', title: 'Vrácení celé platby potvrzeno', copy: 'Potvrzenou vrácenou částku najdete níže. Tuto objednávku znovu neplaťte.' },
+            partial: { badge: 'ČÁSTEČNĚ VRÁCENO', title: 'Část platby byla vrácena', copy: 'Potvrzenou vrácenou částku najdete níže. Zbývající část není novým požadavkem na platbu; objednávku znovu neplaťte.' },
+            pending: { badge: 'VRÁCENÍ SE ZPRACOVÁVÁ', title: 'Čekáme na dokončení vrácení', copy: 'Částka čekající na vrácení ještě není potvrzeným vrácením. Objednávku znovu neplaťte.' },
+            requires_action: { badge: 'VRÁCENÍ VYŽADUJE KONTROLU', title: 'Vrácení platby vyžaduje další krok', copy: 'Pro upřesnění nás kontaktujte. Nejde o novou žádost o zaplacení objednávky; znovu ji neplaťte.' },
+            failed: { badge: 'VRÁCENÍ SE NEZDAŘILO', title: 'Vrácení se nepodařilo dokončit', copy: 'Nejde o neuhrazenou objednávku. Objednávku znovu neplaťte; kvůli vrácení platby nás kontaktujte.' },
+            canceled: { badge: 'VRÁCENÍ ZRUŠENO', title: 'Požadavek na vrácení byl zrušen', copy: 'Případné dříve potvrzené vrácené částky jsou uvedeny níže. Objednávku znovu neplaťte; v případě dotazů nás kontaktujte.' },
+            review: { badge: 'VRÁCENÍ K PROVĚŘENÍ', title: 'Stav vrácení platby ověřujeme', copy: 'Stav vrácení potřebuje kontrolu. Objednávku znovu neplaťte; v případě dotazů nás kontaktujte.' },
+        },
     },
     uk: {
         previewBadge: 'СТАТУС ЗАМОВЛЕННЯ',
@@ -66,6 +84,24 @@ const COPY = {
         home: 'На головну сторінку',
         pickup: 'Balíkovna / BOX',
         address: 'Balíkovna на адресу',
+        refundLead: 'Тут наведено поточний статус повернення коштів. Не оплачуйте замовлення повторно.',
+        testRefundLead: 'Це тестова оплата і тестове повернення коштів. Нічого не сплачуйте; не відправляйте замовлення.',
+        refundSummary: 'Повернення коштів',
+        refundedAmount: 'Підтверджено повернення',
+        refundPendingAmount: 'Очікує повернення',
+        refundAmountUnknown: 'Уточнюється',
+        refundNextTitle: 'Подальші дії',
+        refundNextCopy: 'Якщо питання стосується доставки чи повернення товару, зв’яжіться з нами. Цей статус не підтверджує відправлення посилки.',
+        refundHold: 'Подальшу обробку замовлення призупинено через повернення коштів. Зараз ми не підтверджуємо відправлення.',
+        refunds: {
+            full: { badge: 'КОШТИ ПОВЕРНУТО', title: 'Підтверджено повернення всієї оплати', copy: 'Підтверджену суму повернення наведено нижче. Не оплачуйте це замовлення повторно.' },
+            partial: { badge: 'ЧАСТКОВО ПОВЕРНУТО', title: 'Частину оплати повернуто', copy: 'Підтверджену суму повернення наведено нижче. Залишок не є новою вимогою оплати; не оплачуйте замовлення повторно.' },
+            pending: { badge: 'ПОВЕРНЕННЯ ОБРОБЛЯЄТЬСЯ', title: 'Очікуємо завершення повернення', copy: 'Сума, що очікує повернення, ще не є підтвердженим поверненням. Не оплачуйте замовлення повторно.' },
+            requires_action: { badge: 'ПОВЕРНЕННЯ ПОТРЕБУЄ ПЕРЕВІРКИ', title: 'Для повернення потрібна додаткова дія', copy: 'Зв’яжіться з нами для уточнення. Це не новий запит на оплату замовлення; не оплачуйте його повторно.' },
+            failed: { badge: 'ПОВЕРНЕННЯ НЕ ВДАЛОСЯ', title: 'Не вдалося завершити повернення', copy: 'Це не означає, що замовлення не оплачене. Не оплачуйте його повторно; щодо повернення коштів зв’яжіться з нами.' },
+            canceled: { badge: 'ПОВЕРНЕННЯ СКАСОВАНО', title: 'Запит на повернення скасовано', copy: 'Суми раніше підтверджених повернень, якщо вони є, наведено нижче. Не оплачуйте замовлення повторно; за потреби зв’яжіться з нами.' },
+            review: { badge: 'ПОВЕРНЕННЯ НА ПЕРЕВІРЦІ', title: 'Перевіряємо статус повернення', copy: 'Статус повернення потребує перевірки. Не оплачуйте замовлення повторно; за потреби зв’яжіться з нами.' },
+        },
     },
 };
 
@@ -77,7 +113,16 @@ let errorState = !orderNumber || !token ? 'missing' : null;
 const state = { lang: localStorage.getItem('maminko-lang') === 'cs' ? 'cs' : 'uk' };
 
 function t(key) { return COPY[state.lang][key] ?? key; }
-function price(value) { return `${new Intl.NumberFormat('cs-CZ').format(Number(value) || 0)} Kč`; }
+function price(value) { return `${new Intl.NumberFormat('cs-CZ', { maximumFractionDigits: 2 }).format(Number(value) || 0)} Kč`; }
+
+function refundState(order) {
+    const status = order?.refund?.status;
+    if (status && status !== 'none') return Object.hasOwn(COPY[state.lang].refunds, status) ? status : 'review';
+    return {
+        refunded: 'full', partially_refunded: 'partial', refund_pending: 'pending',
+        refund_failed: 'failed', refund_canceled: 'canceled', refund_review: 'review',
+    }[order?.payment_status] || (order?.refund?.hold ? 'review' : null);
+}
 
 function render() {
     document.documentElement.lang = state.lang;
@@ -90,19 +135,38 @@ function render() {
     const paid = order?.payment_status === 'paid';
     const failed = ['failed', 'cancelled'].includes(order?.payment_status);
     const testPaid = paid && order?.payment_test_mode;
+    const refundStatus = refundState(order);
+    const refundCopy = refundStatus ? COPY[state.lang].refunds[refundStatus] : null;
+    const refundNeedsReview = refundStatus === 'review' || order?.payment_status === 'refund_review';
+    const testRefund = Boolean(refundCopy && order?.payment_test_mode);
     const statusKey = errorState ? 'failed' : testPaid ? 'paidTest' : paid ? 'paid' : failed ? 'failed' : 'pending';
     const titleKey = errorState ? `${errorState}Title` : testPaid ? 'testPaidTitle' : paid ? 'paidTitle' : failed ? 'failedTitle' : 'simulationTitle';
     const copyKey = errorState ? `${errorState}Copy` : testPaid ? 'testPaidCopy' : paid ? 'paidCopy' : failed ? 'failedCopy' : 'simulationCopy';
-    document.querySelector('.paid-pill').textContent = t(statusKey);
+    document.querySelector('.paid-pill').textContent = refundCopy && !errorState
+        ? `${testRefund ? 'TEST · ' : ''}${refundCopy.badge}` : t(statusKey);
     document.querySelector('.paid-pill').classList.toggle('pending', !paid);
-    document.querySelector('.success-icon').textContent = paid ? '✓' : failed || errorState ? '×' : '…';
-    document.querySelector('.success-icon').classList.toggle('pending', !paid);
-    document.querySelector('.simulation-box strong').textContent = t(titleKey);
-    document.querySelector('.simulation-box span').textContent = t(copyKey);
-    if (testPaid) {
+    document.querySelector('.paid-pill').classList.toggle('refund', Boolean(refundCopy));
+    document.querySelector('.success-icon').textContent = errorState ? '×' : refundCopy ? '↶' : paid ? '✓' : failed ? '×' : '…';
+    document.querySelector('.success-icon').classList.toggle('pending', !paid || Boolean(refundCopy));
+    document.querySelector('.simulation-box strong').textContent = refundCopy && !errorState
+        ? `${testRefund ? 'TEST · ' : ''}${refundCopy.title}` : t(titleKey);
+    document.querySelector('.simulation-box span').textContent = refundCopy && !errorState
+        ? `${testRefund ? `${t('testPaidCopy')} ` : ''}${refundCopy.copy}` : t(copyKey);
+    if (refundCopy) {
+        document.querySelector('.success-lead').textContent = t(testRefund ? 'testRefundLead' : 'refundLead');
+        document.querySelector('[data-i18n="nextTitle"]').textContent = t('refundNextTitle');
+        document.querySelector('[data-i18n="nextCopy"]').textContent = t('refundNextCopy');
+    }
+    if (testPaid || testRefund) {
         document.querySelector('[data-i18n="nextTitle"]').textContent = t('testNextTitle');
         document.querySelector('[data-i18n="nextCopy"]').textContent = t('testNextCopy');
     }
+    document.querySelector('#refund-summary').hidden = !refundCopy;
+    document.querySelector('#refund-summary-title').textContent = `${testRefund ? 'TEST · ' : ''}${t('refundSummary')}`;
+    document.querySelector('#refund-refunded').textContent = refundNeedsReview ? t('refundAmountUnknown') : price(order?.refund?.refundedAmount);
+    document.querySelector('#refund-pending').textContent = refundNeedsReview ? t('refundAmountUnknown') : price(order?.refund?.pendingAmount);
+    document.querySelector('#refund-hold').hidden = !refundCopy || !order?.refund?.hold;
+    document.querySelector('[data-i18n="backCheckout"]').hidden = Boolean(refundCopy);
     document.querySelector('#order-reference').textContent = order?.order_number || orderNumber || '—';
     document.querySelector('#order-product').textContent = order?.product_name || '—';
     document.querySelector('#order-price').textContent = order ? price(order.product_price) : '—';
@@ -127,7 +191,7 @@ async function pollPaymentStatus() {
             order = (await response.json()).order;
             if (['cs', 'uk'].includes(order?.lang)) state.lang = order.lang;
             render();
-            if (order?.payment_status !== 'pending') return;
+            if (order?.payment_status !== 'pending' && refundState(order) !== 'pending') return;
         } catch {
             errorState = 'retry';
             render();

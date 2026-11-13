@@ -1,7 +1,9 @@
 import { getAdminSession } from './_lib/admin-auth.js';
 import { listOrdersForAdmin } from './_lib/db.js';
+import { refundPaymentView } from './_lib/stripe-refunds.js';
 
-function mapOrder(row) {
+export function mapOrder(row) {
+    const payment = refundPaymentView(row);
     return {
         orderNumber: row.order_number,
         createdAt: row.created_at,
@@ -19,7 +21,7 @@ function mapOrder(row) {
         shipping: {
             method: row.shipping_method,
             price: row.shipping_price,
-            status: row.shipping_status,
+            status: payment.refund.hold && row.shipping_status === 'ready' ? 'not_ready' : row.shipping_status,
             pickup: row.shipping_method === 'pickup' ? {
                 id: row.pickup_point_id,
                 name: row.pickup_point_name,
@@ -41,7 +43,7 @@ function mapOrder(row) {
             sentAt: row.confirmation_email_sent_at,
         },
         payment: {
-            status: row.payment_status,
+            ...payment,
             provider: row.payment_provider,
             testMode: row.payment_test_mode,
             stripeSessionId: row.stripe_session_id,

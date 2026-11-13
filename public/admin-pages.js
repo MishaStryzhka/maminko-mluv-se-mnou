@@ -28,7 +28,8 @@ function price(value, currency = 'CZK') {
     return new Intl.NumberFormat('cs-CZ', {
         style: 'currency',
         currency: currency || 'CZK',
-        maximumFractionDigits: 0,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
     }).format(Number(value) || 0);
 }
 
@@ -42,19 +43,55 @@ function dateLabel(value) {
 function paymentLabel(status) {
     return {
         paid: 'ZAPLACENO', pending: 'ČEKÁ', failed: 'CHYBA', cancelled: 'ZRUŠENO', canceled: 'ZRUŠENO',
+        refunded: 'VRÁCENO', partially_refunded: 'ČÁSTEČNĚ VRÁCENO',
+        refund_pending: 'VRÁCENÍ SE ZPRACOVÁVÁ', refund_failed: 'VRÁCENÍ SE NEZDAŘILO',
+        refund_canceled: 'VRÁCENÍ ZRUŠENO', refund_review: 'VRÁCENÍ K PROVĚŘENÍ',
     }[status] || String(status || '—').toUpperCase();
+}
+
+function refundLabel(status) {
+    return {
+        none: 'BEZ VRÁCENÍ', full: 'VRÁCENO V PLNÉ VÝŠI', partial: 'ČÁSTEČNĚ VRÁCENO',
+        pending: 'VRÁCENÍ SE ZPRACOVÁVÁ', requires_action: 'VRÁCENÍ VYŽADUJE KONTROLU',
+        failed: 'VRÁCENÍ SE NEZDAŘILO', canceled: 'VRÁCENÍ ZRUŠENO', review: 'VRÁCENÍ K PROVĚŘENÍ',
+    }[status || 'none'] || 'VRÁCENÍ K PROVĚŘENÍ';
+}
+
+function wasPaid(order) {
+    return (order.payment?.originalStatus ?? order.payment?.status) === 'paid';
+}
+
+function refundNeedsReview(order) {
+    return order.payment?.status === 'refund_review' || order.payment?.refund?.status === 'review';
+}
+
+function readyToShip(order) {
+    return order.shipping?.status === 'ready' && wasPaid(order) && !order.payment?.testMode && !order.payment?.refund?.hold;
+}
+
+function amountInCents(value) {
+    const amount = Number(value);
+    return Number.isFinite(amount) ? Math.round(amount * 100) : 0;
+}
+
+function refundAmounts(order) {
+    if (refundNeedsReview(order)) return 'Vráceno: Ověřuje se · Čeká na vrácení: Ověřuje se';
+    const refund = order.payment?.refund || {};
+    return `Vráceno: ${price(refund.refundedAmount, order.currency)} · Čeká na vrácení: ${price(refund.pendingAmount, order.currency)}`;
 }
 
 function shippingLabel(status) {
     return {
         ready: 'READY', not_ready: 'ČEKÁ', sent: 'ODESLÁNO', delivered: 'DORUČENO', cancelled: 'ZRUŠENO',
+        refund_hold: 'POZASTAVENO · VRATKA',
     }[status] || String(status || '—').toUpperCase();
 }
 
 function statusClass(type, status) {
     if (type === 'payment') {
         if (status === 'paid') return 'paid';
-        if (['failed', 'cancelled', 'canceled'].includes(status)) return 'error';
+        if (['refunded', 'partially_refunded'].includes(status)) return 'refund';
+        if (['failed', 'cancelled', 'canceled', 'refund_failed', 'refund_canceled'].includes(status)) return 'error';
         return 'pending';
     }
     if (status === 'ready') return 'ready';
@@ -113,6 +150,31 @@ function badge(type, status) {
     span.className = `status ${statusClass(type, status)}`;
     span.textContent = type === 'payment' ? paymentLabel(status) : shippingLabel(status);
     return span;
+}
+
+function appendPaymentStatus(container, order) {
+    const payment = order.payment || {};
+    const status = badge('payment', payment.status);
+    if (payment.testMode) status.textContent = `TEST · ${status.textContent}`;
+    container.appendChild(status);
+    if (payment.refund && payment.refund.status !== 'none') {
+        const amounts = document.createElement('small');
+        amounts.textContent = refundAmounts(order);
+        container.appendChild(amounts);
+    }
+}
+
+function appendShippingStatus(container, order) {
+    const hold = order.payment?.refund?.hold;
+    const status = hold && !['sent', 'delivered'].includes(order.shipping?.status)
+        ? 'refund_hold' : order.shipping?.status;
+    container.appendChild(badge('shipping', status));
+    if (hold) {
+        const warning = document.createElement('small');
+        warning.className = 'refund-hold-note';
+        warning.textContent = 'Neexpedovat; již odeslanou zásilku prověřit.';
+        container.appendChild(warning);
+    }
 }
 
 function pageAllowed(user) {
@@ -188,19 +250,21 @@ async function loadOrders(renderer) {
 }
 
 function filteredOrders() {
-    if (state.filter === 'paid') return state.orders.filter((order) => order.payment?.status === 'paid');
-    if (state.filter === 'ready') return state.orders.filter((order) => order.shipping?.status === 'ready');
+    if (state.filter === 'paid') return state.orders.filter(wasPaid);
+    if (state.filter === 'ready') return state.orders.filter(readyToShip);
     return state.orders;
 }
 
 function renderOrdersPage() {
-    const paid = state.orders.filter((order) => order.payment?.status === 'paid');
-    const ready = state.orders.filter((order) => order.shipping?.status === 'ready');
-    const revenue = paid.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0);
+    const paid = state.orders.filter((order) => wasPaid(order) && !order.payment?.testMode);
+    const ready = state.orders.filter(readyToShip);
+    // Work in minor units. Pending/failed/canceled refunds are not deducted.
+    const revenueCents = paid.reduce((sum, order) => sum + amountInCents(order.totalAmount)
+        - amountInCents(order.payment?.refund?.refundedAmount), 0);
     setText('#stat-orders', state.orders.length);
     setText('#stat-paid', paid.length);
     setText('#stat-ready', ready.length);
-    setText('#stat-revenue', price(revenue));
+    setText('#stat-revenue', paid.some(refundNeedsReview) ? 'K prověření' : price(revenueCents / 100));
 
     const body = document.querySelector('#orders-body');
     const empty = document.querySelector('#orders-empty');
@@ -215,10 +279,10 @@ function renderOrdersPage() {
         tr.appendChild(cell(order.customer?.name, order.customer?.email));
         tr.appendChild(cell(order.productName, shippingName(order)));
         const paymentTd = document.createElement('td');
-        paymentTd.appendChild(badge('payment', order.payment?.status));
+        appendPaymentStatus(paymentTd, order);
         tr.appendChild(paymentTd);
         const shippingTd = document.createElement('td');
-        shippingTd.appendChild(badge('shipping', order.shipping?.status));
+        appendShippingStatus(shippingTd, order);
         tr.appendChild(shippingTd);
         tr.appendChild(cell(price(order.totalAmount, order.currency), `doprava ${price(order.shipping?.price, order.currency)}`));
         const actionTd = document.createElement('td');
@@ -241,21 +305,36 @@ function renderOrderDetail(order) {
     setText('#detail-contact', `${order.customer?.email || '—'} · ${order.customer?.phone || '—'}`);
     setText('#detail-product', order.productName);
     setText('#detail-price', `${price(order.productPrice, order.currency)} + doprava ${price(order.shipping?.price, order.currency)} = ${price(order.totalAmount, order.currency)}`);
-    setText('#detail-payment', paymentLabel(order.payment?.status));
-    setText('#detail-gopay', order.payment?.gopayPaymentId ? `GoPay ID: ${order.payment.gopayPaymentId} · ${order.payment.gopayState || '—'}` : 'GoPay ID zatím není k dispozici');
+    setText('#detail-payment', `${order.payment?.testMode ? 'TEST · ' : ''}${paymentLabel(order.payment?.status)}`);
+    const payment = order.payment || {};
+    const paymentReference = payment.provider === 'stripe'
+        ? `Stripe ${payment.testMode ? '(TEST) ' : ''}${payment.stripeSessionId || 'bez ID'} · ${payment.stripeState || '—'}`
+        : payment.gopayPaymentId ? `GoPay ID: ${payment.gopayPaymentId} · ${payment.gopayState || '—'}` : 'Platební ID zatím není k dispozici';
+    setText('#detail-gateway', paymentReference);
+    const refund = payment.refund || {};
+    setText('#detail-refund', `${payment.testMode ? 'TEST · ' : ''}${refundLabel(refund.status)}`);
+    setText('#detail-refund-amounts', refundAmounts(order));
+    setText('#detail-refund-attempts', `Neúspěšné vratky: ${Number(refund.failedCount) || 0} · Zrušené vratky: ${Number(refund.canceledCount) || 0}`);
+    showMessage(document.querySelector('#detail-refund-hold'), refund.hold
+        ? `${payment.testMode ? 'TEST · ' : ''}Objednávka je pozastavena kvůli vrácení platby. Neexpedujte ji; již odeslanou zásilku a další postup prověřte.` : '');
     setText('#detail-shipping', shippingName(order));
     setText('#detail-destination', destination(order));
+    const email = order.confirmationEmail || {};
+    const emailLabels = { pending: 'ČEKÁ', sending: 'ODESÍLÁ SE', sent: 'PŘIJATO SMTP SERVEREM', failed: 'CHYBA — ČEKÁ NA OPAKOVÁNÍ' };
+    const testSuppressed = order.payment?.testMode && !email.attempts;
+    setText('#detail-email', testSuppressed ? 'TEST — E-MAIL NEODESLÁN' : emailLabels[email.status] || '—');
+    setText('#detail-email-attempts', `Pokusy: ${email.attempts || 0}${email.sentAt ? ` · ${dateLabel(email.sentAt)}` : ''}`);
     const paymentBadge = document.querySelector('#detail-payment-badge');
     if (paymentBadge) {
         paymentBadge.className = `status ${statusClass('payment', order.payment?.status)}`;
-        paymentBadge.textContent = paymentLabel(order.payment?.status);
+        paymentBadge.textContent = `${order.payment?.testMode ? 'TEST · ' : ''}${paymentLabel(order.payment?.status)}`;
     }
     detail.classList.add('open');
     detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function renderShippingPage() {
-    const ready = state.orders.filter((order) => order.shipping?.status === 'ready').length;
+    const ready = state.orders.filter(readyToShip).length;
     const sent = state.orders.filter((order) => order.shipping?.status === 'sent').length;
     const delivered = state.orders.filter((order) => order.shipping?.status === 'delivered').length;
     setText('#ship-ready', ready);
@@ -273,10 +352,10 @@ function renderShippingPage() {
         tr.appendChild(cell(order.customer?.name, order.customer?.phone));
         tr.appendChild(cell(shippingName(order), destination(order)));
         const statusTd = document.createElement('td');
-        statusTd.appendChild(badge('shipping', order.shipping?.status));
+        appendShippingStatus(statusTd, order);
         tr.appendChild(statusTd);
         const paymentTd = document.createElement('td');
-        paymentTd.appendChild(badge('payment', order.payment?.status));
+        appendPaymentStatus(paymentTd, order);
         tr.appendChild(paymentTd);
         body.appendChild(tr);
     });
@@ -376,7 +455,7 @@ async function loadSettings() {
         const data = await readJson(response);
         if (!response.ok) throw new Error();
         setText('#setting-db', data.databaseReady ? 'Připojeno' : 'Chybí DATABASE_URL');
-        setText('#setting-gopay', data.gopaySandboxReady ? (data.sandbox ? 'Sandbox připraven' : 'Připraven') : 'Není kompletní');
+        setText('#setting-stripe', data.stripeEnabled ? (data.sandbox ? 'Testovací režim připraven' : 'Produkční režim připraven') : 'Není aktivní');
         setText('#setting-pickup', data.shipping?.pickup == null ? '—' : price(data.shipping.pickup));
         setText('#setting-address', data.shipping?.address == null ? '—' : price(data.shipping.address));
     } catch {

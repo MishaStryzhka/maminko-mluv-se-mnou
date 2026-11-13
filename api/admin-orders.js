@@ -1,7 +1,9 @@
 import { getAdminSession } from './_lib/admin-auth.js';
 import { listOrdersForAdmin } from './_lib/db.js';
+import { refundPaymentView } from './_lib/stripe-refunds.js';
 
-function mapOrder(row) {
+export function mapOrder(row) {
+    const payment = refundPaymentView(row);
     return {
         orderNumber: row.order_number,
         createdAt: row.created_at,
@@ -19,7 +21,7 @@ function mapOrder(row) {
         shipping: {
             method: row.shipping_method,
             price: row.shipping_price,
-            status: row.shipping_status,
+            status: payment.refund.hold && row.shipping_status === 'ready' ? 'not_ready' : row.shipping_status,
             pickup: row.shipping_method === 'pickup' ? {
                 id: row.pickup_point_id,
                 name: row.pickup_point_name,
@@ -35,8 +37,18 @@ function mapOrder(row) {
             } : null,
         },
         totalAmount: row.total_amount,
+        confirmationEmail: {
+            status: row.confirmation_email_status,
+            attempts: row.confirmation_email_attempts,
+            sentAt: row.confirmation_email_sent_at,
+        },
         payment: {
-            status: row.payment_status,
+            ...payment,
+            provider: row.payment_provider,
+            testMode: row.payment_test_mode,
+            stripeSessionId: row.stripe_session_id,
+            stripePaymentIntentId: row.stripe_payment_intent_id,
+            stripeState: row.stripe_payment_status,
             gopayPaymentId: row.gopay_payment_id,
             gopayState: row.gopay_state,
             paidAt: row.paid_at,
@@ -63,7 +75,7 @@ export default async function handler(req, res) {
         const rows = await listOrdersForAdmin(limit);
         return res.status(200).json({ orders: rows.map(mapOrder) });
     } catch (error) {
-        console.error('Admin orders failed', error?.code || error?.message);
+        console.error('Admin orders failed', /^[A-Z0-9_]+$/.test(error?.code || '') ? error.code : 'ADMIN_ORDERS_FAILED');
         if (error?.code === 'DATABASE_NOT_CONFIGURED') {
             return res.status(503).json({ error: error.code });
         }

@@ -5,7 +5,17 @@
   "engines": {
     "node": ">=20"
   },
+  "scripts": {
+    "test": "node --test"
+  },
   "dependencies": {
-    "@neondatabase/serverless": "^1.0.0"
+    "@neondatabase/serverless": "^1.0.0",
+    "@vercel/functions": "^3.11.2",
+    "nodemailer": "^10.5.0",
+    "stripe": "^23.1.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16",
+    "playwright-core": "^1.65.0"
   }
 }

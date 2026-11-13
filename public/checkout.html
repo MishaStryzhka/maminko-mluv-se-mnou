@@ -7,6 +7,7 @@
         <title>Objednávka · Maminko, mluv se mnou</title>
         <link rel="stylesheet" href="checkout.css" />
         <link rel="stylesheet" href="review.css" />
+        <link rel="stylesheet" href="stripe-status.css" />
     </head>
     <body>
         <header class="checkout-header">
@@ -22,9 +23,9 @@
 
         <main class="checkout-shell">
             <div class="checkout-heading">
-                <div class="preview-badge" data-i18n="previewBadge">TESTOVACÍ NÁHLED</div>
+                <div class="preview-badge" data-i18n="previewBadge">PLATBA SE PŘIPRAVUJE</div>
                 <h1 data-i18n="title">Objednávka</h1>
-                <p data-i18n="intro">Vyplňte údaje a vyberte způsob doručení. V tomto náhledu se objednávka neodesílá a platba se nespouští.</p>
+                <p data-i18n="intro">Vyplňte údaje a vyberte způsob doručení. Na posledním kroku budete přesměrováni na zabezpečenou platbu Stripe.</p>
             </div>
 
             <div class="checkout-layout">
@@ -166,7 +167,8 @@
                         </div>
                     </section>
 
-                    <button type="submit" class="btn primary submit-mobile" data-i18n="previewOrder">Zkontrolovat objednávku</button>
+                    <p id="checkout-error" class="field-error" role="alert" hidden></p>
+                    <button type="submit" class="btn primary submit-mobile" data-i18n="previewOrder" disabled>Zkontrolovat objednávku</button>
                 </form>
 
                 <aside class="summary-card" aria-labelledby="summary-title">
@@ -182,17 +184,17 @@
                     <div class="summary-lines">
                         <div><span data-i18n="delivery">Doprava</span><strong id="summary-shipping"></strong></div>
                         <div id="summary-point-row" hidden><span data-i18n="pickup">Výdejní místo</span><strong id="summary-point"></strong></div>
-                        <div><span data-i18n="shippingPrice">Cena dopravy</span><strong data-i18n="shippingTbd">doplníme</strong></div>
+                        <div><span data-i18n="shippingPrice">Cena dopravy</span><strong id="summary-shipping-price" data-i18n="shippingTbd">Načítání…</strong></div>
                     </div>
                     <div class="summary-total">
-                        <span data-i18n="subtotal">Mezisoučet bez dopravy</span>
+                        <span data-i18n="subtotal">Celkem včetně dopravy</span>
                         <strong id="summary-total"></strong>
                     </div>
-                    <p class="summary-note" data-i18n="shippingNote">Přesnou cenu dopravy nastavíme po odsouhlasení vašeho smluvního ceníku Balíkovny.</p>
-                    <button type="submit" form="checkout-form" class="btn primary submit-desktop" data-i18n="previewOrder">Zkontrolovat objednávku</button>
+                    <p class="summary-note" data-i18n="shippingNote">Cenu dopravy uvidíte před přechodem k platbě.</p>
+                    <button type="submit" form="checkout-form" class="btn primary submit-desktop" data-i18n="previewOrder" disabled>Zkontrolovat objednávku</button>
                     <div class="payment-note">
                         <strong data-i18n="paymentNotLive">Platba zatím není aktivní</strong>
-                        <span data-i18n="paymentNext">Po schválení checkoutu sem připojíme platební bránu.</span>
+                        <span data-i18n="paymentNext">Čekáme na dokončení aktivace Stripe. Platbu zatím nelze spustit.</span>
                     </div>
                 </aside>
             </div>
@@ -227,16 +229,17 @@
                     </section>
                 </div>
                 <div class="review-total">
-                    <span data-i18n="subtotal">Mezisoučet bez dopravy</span>
+                    <span data-i18n="subtotal">Celkem včetně dopravy</span>
                     <strong id="review-total"></strong>
                 </div>
                 <div class="review-warning">
-                    <strong data-i18n="simulationTitle">Preview platebního kroku</strong>
-                    <span data-i18n="simulationCopy">Další tlačítko pouze zobrazí náhled stránky po úspěšné platbě. Peníze se nestrhnou a objednávka se neuloží.</span>
+                    <strong data-i18n="simulationTitle">Bezpečná platba přes Stripe</strong>
+                    <span data-i18n="simulationCopy">Po kliknutí vytvoříme objednávku a přesměrujeme vás na Stripe. Objednávku připravíme až po potvrzení úhrady.</span>
                 </div>
+                <p id="review-error" class="field-error" role="alert" hidden></p>
                 <div class="review-actions">
                     <button type="button" class="btn secondary" id="edit-order" data-i18n="editOrder">Upravit údaje</button>
-                    <button type="button" class="btn primary" id="preview-success" data-i18n="previewPayment">Zobrazit náhled po platbě</button>
+                    <button type="button" class="btn primary" id="start-payment" data-i18n="previewPayment">Přejít k platbě</button>
                 </div>
             </div>
         </dialog>

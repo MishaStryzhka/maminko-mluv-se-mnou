@@ -39,6 +39,7 @@
                 <label><span>Heslo</span><input id="admin-password" type="password" autocomplete="current-password" required /></label>
                 <button type="submit" class="primary-action">Přihlásit se</button>
             </form>
+            <a class="auth-recovery-link" href="/admin/forgot-password">Zapomenuté heslo?</a>
             <p id="auth-message" class="admin-message" hidden></p>
         </section>
 
@@ -58,15 +59,15 @@
         <div id="admin-content" hidden>
             <section class="stats">
                 <article><span>Objednávky</span><strong id="stat-orders">0</strong><small>načteno</small></article>
-                <article><span>Zaplaceno</span><strong id="stat-paid">0</strong><small>PAID</small></article>
-                <article><span>K odeslání</span><strong id="stat-ready">0</strong><small>READY</small></article>
-                <article><span>Obrat</span><strong id="stat-revenue">0 Kč</strong><small>zaplacené objednávky</small></article>
+                <article><span>Původně zaplacené</span><strong id="stat-paid">0</strong><small>načtené · bez testů</small></article>
+                <article><span>K odeslání</span><strong id="stat-ready">0</strong><small>načtené · bez testů a pozastavených</small></article>
+                <article><span>Přijato po vratkách</span><strong id="stat-revenue">0 Kč</strong><small>načtené platby − potvrzené vratky · bez testů</small></article>
             </section>
 
             <section class="orders-card">
                 <div class="section-head">
-                    <div><h2>Poslední objednávky</h2><p>Reálná data z Neon. Platba a doprava jsou vedené samostatně.</p></div>
-                    <div class="filters"><button type="button" class="on" data-filter="all">Vše</button><button type="button" data-filter="paid">Zaplacené</button><button type="button" data-filter="ready">K odeslání</button></div>
+                    <div><h2>Poslední objednávky</h2><p>Přehled načtených objednávek, nikoli účetní výkaz. Čekající vratky se od přijaté částky neodečítají.</p></div>
+                    <div class="filters"><button type="button" class="on" data-filter="all">Vše</button><button type="button" data-filter="paid">Zaplacené (vč. vratek)</button><button type="button" data-filter="ready">K odeslání</button></div>
                 </div>
                 <div class="table-wrap">
                     <table><thead><tr><th>Objednávka</th><th>Zákazník</th><th>Produkt</th><th>Platba</th><th>Doprava</th><th>Částka</th><th></th></tr></thead><tbody id="orders-body"></tbody></table>
@@ -79,9 +80,12 @@
                 <div class="detail-grid">
                     <article><span>Zákazník</span><strong id="detail-name">—</strong><small id="detail-contact">—</small></article>
                     <article><span>Produkt</span><strong id="detail-product">—</strong><small id="detail-price">—</small></article>
-                    <article><span>Platba</span><strong id="detail-payment">—</strong><small id="detail-gopay">—</small></article>
+                    <article><span>Platba</span><strong id="detail-payment">—</strong><small id="detail-gateway">—</small></article>
+                    <article><span>Vrácení platby</span><strong id="detail-refund">—</strong><small id="detail-refund-amounts">—</small><small id="detail-refund-attempts">—</small></article>
                     <article><span>Doručení</span><strong id="detail-shipping">—</strong><small id="detail-destination">—</small></article>
+                    <article><span>Potvrzovací e-mail</span><strong id="detail-email">—</strong><small id="detail-email-attempts">—</small></article>
                 </div>
+                <p id="detail-refund-hold" class="refund-hold-warning" role="status" hidden></p>
                 <div class="admin-actions"><a class="primary-action" href="/admin/shipping" style="padding:11px 14px;border-radius:10px;font-size:11px;font-weight:900;text-decoration:none">Přejít do zásilek</a></div>
             </section>
         </div>

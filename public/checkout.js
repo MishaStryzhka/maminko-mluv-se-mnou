@@ -1,9 +1,6 @@
 const COPY = {
     cs: {
         back: '← Zpět',
-        previewBadge: 'PLATBA SE PŘIPRAVUJE',
-        title: 'Objednávka',
-        intro: 'Vyplňte údaje a vyberte způsob doručení. Na posledním kroku budete přesměrováni na zabezpečenou platbu Stripe.',
         productTitle: 'Vyberte variantu',
         fullName: 'Kompletní balíček',
         fullDesc: 'Tištěná publikace + digitální materiály v Telegram kanálu',
@@ -35,7 +32,6 @@ const COPY = {
         shippingTbd: 'Načítání…',
         subtotal: 'Celkem včetně dopravy',
         stripeTestBadge: 'TESTOVACÍ PLATBA',
-        stripeLiveBadge: 'BEZPEČNÁ PLATBA',
         pickerTitle: 'Vyberte Balíkovnu / BOX',
         pickerSubtitle: 'Oficiální vyhledávač Balíkovny',
         pickupMethod: 'Balíkovna / BOX',
@@ -47,9 +43,6 @@ const COPY = {
     },
     uk: {
         back: '← Назад',
-        previewBadge: 'ОПЛАТА ГОТУЄТЬСЯ',
-        title: 'Замовлення',
-        intro: 'Заповніть дані та виберіть доставку. Після перевірки замовлення ви перейдете на захищену сторінку Stripe.',
         productTitle: 'Виберіть варіант',
         fullName: 'Повний комплект',
         fullDesc: 'Друкований посібник + цифрові матеріали в Telegram-каналі',
@@ -81,7 +74,6 @@ const COPY = {
         shippingTbd: 'Завантаження…',
         subtotal: 'Разом із доставкою',
         stripeTestBadge: 'ТЕСТОВА ОПЛАТА',
-        stripeLiveBadge: 'БЕЗПЕЧНА ОПЛАТА',
         pickerTitle: 'Виберіть Balíkovna / BOX',
         pickerSubtitle: 'Офіційний пошук Balíkovna',
         pickupMethod: 'Balíkovna / BOX',
@@ -377,10 +369,9 @@ async function loadCheckoutConfiguration() {
 }
 
 function refreshPaymentAvailability() {
-    const badge = document.querySelector('.checkout-heading .preview-badge');
-    badge.textContent = state.checkoutEnabled
-        ? t(state.sandbox ? 'stripeTestBadge' : 'stripeLiveBadge')
-        : t('previewBadge');
+    const status = document.querySelector('#checkout-status');
+    status.hidden = state.checkoutEnabled && !state.sandbox;
+    status.textContent = status.hidden ? '' : t(state.checkoutEnabled ? 'stripeTestBadge' : 'paymentUnavailable');
     payButton.disabled = !state.checkoutEnabled || paymentPending;
     payButton.textContent = t(paymentPending ? 'paymentStarting' : 'pay');
 }

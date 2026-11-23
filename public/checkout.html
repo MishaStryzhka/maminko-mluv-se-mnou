@@ -21,12 +21,6 @@
         </header>
 
         <main class="checkout-shell">
-            <div class="checkout-heading">
-                <div class="preview-badge" data-i18n="previewBadge">PLATBA SE PŘIPRAVUJE</div>
-                <h1 data-i18n="title">Objednávka</h1>
-                <p data-i18n="intro">Vyplňte údaje a vyberte způsob doručení. Na posledním kroku budete přesměrováni na zabezpečenou platbu Stripe.</p>
-            </div>
-
             <div class="checkout-layout">
                 <form id="checkout-form" class="checkout-form" novalidate>
                     <section class="step-card" aria-labelledby="product-title">
@@ -177,6 +171,7 @@
                             <span id="digital-consent-text">U kompletního balíčku výslovně souhlasím se zpřístupněním digitálního obsahu ihned po zaplacení před uplynutím 14denní lhůty a beru na vědomí, že po zahájení plnění zaniká právo odstoupit od smlouvy v rozsahu digitálního obsahu.</span>
                         </label>
                     </div>
+                    <p id="checkout-status" role="status" hidden></p>
                     <p id="checkout-error" class="field-error" role="alert" hidden></p>
                     <button id="start-payment" type="submit" form="checkout-form" class="btn primary" data-i18n="pay" disabled>Zaplatit</button>
                 </aside>

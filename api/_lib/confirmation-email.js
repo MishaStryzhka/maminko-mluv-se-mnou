@@ -27,7 +27,7 @@ export function validRecipient(value) {
 
 const translations = {
     cs: {
-        subject: 'Potvrzení přijetí objednávky',
+        subject: 'Platba přijata · Objednávka',
         greeting: 'Dobrý den',
         intro: 'Potvrzujeme přijetí a úhradu vaší objednávky Maminko, mluv se mnou.',
         order: 'Číslo objednávky',
@@ -47,7 +47,7 @@ const translations = {
         test: 'TEST — pouze zkouška integrace. Nejde o skutečnou platbu, objednávku ani potvrzení smlouvy. Zboží neodesílejte.',
     },
     uk: {
-        subject: 'Підтвердження прийняття замовлення',
+        subject: 'Оплату отримано · Замовлення',
         greeting: 'Вітаємо',
         intro: 'Підтверджуємо отримання та оплату вашого замовлення Maminko, mluv se mnou.',
         order: 'Номер замовлення',
@@ -80,7 +80,7 @@ function price(value) {
 
 function recipientAddress(order) {
     if (order.shipping_method === 'pickup') {
-        return [order.pickup_point_name, order.pickup_point_address, order.pickup_point_zip].filter(Boolean).join(', ');
+        return [order.pickup_point_name, order.pickup_point_address || order.pickup_point_zip].filter(Boolean).join(', ');
     }
     return [order.address_street, order.address_zip, order.address_city, 'Česká republika'].filter(Boolean).join(', ');
 }
@@ -98,8 +98,6 @@ export function buildConfirmationEmail(order) {
         [tr.order, order.order_number],
         [tr.product, order.product_name],
         [tr.productPrice, price(order.product_price)],
-        [tr.delivery, shipping],
-        [tr.address, recipientAddress(order)],
         [tr.shippingPrice, price(order.shipping_price)],
         [tr.total, price(order.total_amount)],
     ];
@@ -108,20 +106,26 @@ export function buildConfirmationEmail(order) {
         if (order.digital_consent_at) digitalParagraphs.push(tr.digitalConsent);
         digitalParagraphs.push(test ? tr.digitalTest : tr.digital);
     }
+    const heading = order.lang === 'uk' ? 'Дякуємо за замовлення!' : 'Děkujeme za objednávku!';
+    const receipt = order.lang === 'uk'
+        ? `Ми отримали вашу оплату — ${price(order.total_amount)}. Підготуємо ваш посібник до відправлення. Фактура у вкладенні.`
+        : `Platbu ${price(order.total_amount)} jsme přijali. Vaši publikaci připravíme k odeslání. Fakturu najdete v příloze.`;
     const text = [
-        `${tr.greeting}, ${order.customer_name}!`,
-        '', test ? tr.test : tr.intro, '',
+        heading,
+        '', test ? tr.test : receipt, '',
         ...rows.map(([label, value]) => `${label}: ${value}`),
+        '', shipping, recipientAddress(order),
         ...digitalParagraphs.flatMap((paragraph) => ['', paragraph]),
         '', tr.closing, '', tr.signature, 'GlamGarb Rentals s.r.o.',
     ].join('\n');
     const htmlRows = rows.map(([label, value]) =>
-        `<tr><th align="left" style="padding:6px 12px 6px 0">${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`
+        `<tr><th align="left" style="padding:6px 12px 6px 0">${escapeHtml(label)}</th><td style="font-weight:${label === tr.total ? 700 : 400}">${escapeHtml(value)}</td></tr>`
     ).join('');
     const html = `<div style="font-family:Arial,sans-serif;max-width:620px;color:#29302f;line-height:1.6">`
-        + `<p>${escapeHtml(tr.greeting)}, ${escapeHtml(order.customer_name)}!</p>`
-        + `<p>${escapeHtml(test ? tr.test : tr.intro)}</p>`
+        + `<p style="color:#705899;font-weight:bold">♥ Maminko, mluv se mnou</p><h2>${heading}</h2>`
+        + `<p>${escapeHtml(test ? tr.test : receipt)}</p>`
         + `<table style="border-collapse:collapse">${htmlRows}</table>`
+        + `<p><strong>${escapeHtml(shipping)}</strong><br>${escapeHtml(recipientAddress(order))}</p>`
         + digitalParagraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join('')
         + `<p>${escapeHtml(tr.closing)}</p><p>${escapeHtml(tr.signature)}<br>GlamGarb Rentals s.r.o.</p></div>`;
     return {
@@ -140,7 +144,7 @@ export async function sendConfirmationEmail(order, { createTransport = nodemaile
     if (order.payment_test_mode && (!ownerTestEmailEnabled() || order.customer_email.toLowerCase() !== SHOP_EMAIL)) {
         throw emailError('TEST_EMAIL_NOT_ALLOWED');
     }
-    if (!/^MAM-\d{4}-[A-Z0-9]+$/.test(order.order_number)) throw emailError('EMAIL_ORDER_NUMBER_INVALID');
+    if (!/^MAM-\d{4}-(?:[A-Z0-9]+|(?:0[1-9]|1[0-2])-\d{4,})$/.test(order.order_number)) throw emailError('EMAIL_ORDER_NUMBER_INVALID');
     const { subject, text, html } = buildConfirmationEmail(order);
     const transport = createTransport({
         host: SMTP_HOST,
@@ -155,7 +159,10 @@ export async function sendConfirmationEmail(order, { createTransport = nodemaile
         socketTimeout: 15000,
     });
     try {
+        const { invoicePdf } = await import('./invoice-pdf.js');
+        const invoice = await invoicePdf(order);
         const result = await transport.sendMail({
+            attachments: [{ filename: `${order.payment_test_mode ? 'TEST-' : ''}Faktura-${order.order_number}.pdf`, content: invoice, contentType: 'application/pdf' }],
             from: { name: 'Maminko, mluv se mnou', address: smtpUser() },
             to: { address: order.customer_email },
             replyTo: { address: smtpUser() },

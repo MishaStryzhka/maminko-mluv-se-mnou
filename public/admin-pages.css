@@ -11,3 +11,26 @@
 #orders-body tr:hover, #orders-body tr:focus-within { background: #f6f3f8; }
 .order-row-link:focus-visible::after { outline: 2px solid var(--violet-dark); outline-offset: -2px; }
 #admin-content > [hidden] { display: none; }
+
+#order-detail { max-width: 860px; padding: clamp(20px, 3vw, 36px); color: var(--ink); }
+.receipt-head, .receipt-lines > div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.receipt-head { align-items: flex-start; flex-wrap: wrap; }
+.receipt-head h2 { margin: 0; font-size: 22px; }
+#order-detail p { margin: 5px 0 0; line-height: 1.55; color: var(--muted); }
+#order-detail .refund-hold-warning { margin-top: 14px; color: #813c2a; }
+.receipt-lines { margin: 24px 0; padding: 12px 18px; background: #f8f6fa; border-radius: 12px; }
+.receipt-lines > div { padding: 6px 0; }
+.receipt-lines > div > :last-child { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.receipt-lines .receipt-total { margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 19px; }
+.receipt-parties { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+#order-detail section { min-width: 0; overflow-wrap: anywhere; }
+#order-detail h3 { margin: 0 0 8px; font-size: 14px; color: var(--violet-dark); }
+.receipt-parties p { white-space: pre-line; }
+.receipt-parties a { display: inline-block; margin-top: 10px; color: var(--violet-dark); }
+.receipt-more, .receipt-exception { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); }
+.receipt-more summary { cursor: pointer; color: var(--violet-dark); font-weight: 700; }
+.receipt-more section { margin-top: 16px; }
+@media (max-width: 640px) {
+    .receipt-parties { grid-template-columns: 1fr; gap: 20px; }
+    body:has(#order-navigation:not([hidden])) .admin-header h1 { font-size: clamp(22px, 6vw, 32px); overflow-wrap: anywhere; }
+}

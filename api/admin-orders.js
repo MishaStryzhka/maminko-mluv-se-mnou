@@ -72,6 +72,16 @@ export default async function handler(req, res) {
             return res.status(403).json({ error: 'FORBIDDEN' });
         }
 
+        if (req.query?.orderNumber !== undefined) {
+            const number = req.query.orderNumber;
+            if (typeof number !== 'string' || !/^MAM-\d{4}-(?:[A-F0-9]{8}|\d{2}-\d{4,})$/i.test(number)) {
+                return res.status(404).json({ error: 'ORDER_NOT_FOUND' });
+            }
+            const [row] = await listOrdersForAdmin(1, { orderNumber: number.toUpperCase() });
+            if (!row) return res.status(404).json({ error: 'ORDER_NOT_FOUND' });
+            return res.status(200).json({ order: mapOrder(row) });
+        }
+
         const limit = Number(req.query?.limit || 100);
         const rows = await listOrdersForAdmin(limit);
         return res.status(200).json({ orders: rows.map(mapOrder) });

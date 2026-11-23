@@ -4,3 +4,10 @@
 
 .invite-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.invite-link-button{border:1px solid #d9cce2;background:#faf7fc;color:var(--violet-dark);border-radius:999px;padding:7px 10px;font-size:10px;font-weight:900;cursor:pointer}.invite-link-button:hover{background:#f1e9f6}.invite-link-button:disabled,.danger-button:disabled{opacity:.55;cursor:wait}.invite-row-new{margin-left:-10px;margin-right:-10px;padding-left:10px;padding-right:10px;border-radius:12px;background:#f7f1fb;animation:inviteHighlight 2.6s ease-out 1}.pending-invites>strong{display:block;margin-bottom:6px}@keyframes inviteHighlight{0%,45%{box-shadow:0 0 0 3px #d9c7e8;background:#f3eaf9}100%{box-shadow:0 0 0 0 transparent;background:#f7f1fb}}@media(max-width:720px){.invite-actions{width:100%;justify-content:stretch}.invite-actions button{flex:1}.invite-row-new{margin-left:-6px;margin-right:-6px;padding-left:6px;padding-right:6px}}
 .status.refund{background:#ece8f4;color:#665386}.refund-hold-note{color:#8a5b2a;font-weight:700}.refund-hold-warning{padding:12px 14px;border:1px solid #e5d5b6;border-radius:10px;background:#fff7e8;color:#755024;font-size:12px;line-height:1.5}
+
+#orders-body tr { position: relative; }
+.order-row-link { color: inherit; text-decoration: none; }
+.order-row-link::after { content: ""; position: absolute; inset: 0; }
+#orders-body tr:hover, #orders-body tr:focus-within { background: #f6f3f8; }
+.order-row-link:focus-visible::after { outline: 2px solid var(--violet-dark); outline-offset: -2px; }
+#admin-content > [hidden] { display: none; }

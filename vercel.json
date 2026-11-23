@@ -1,6 +1,7 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
+  "rewrites": [{"source": "/admin/orders/:orderNumber", "destination": "/admin/orders"}],
   "functions": {
     "api/stripe-webhook.js": { "includeFiles": "node_modules/@ibm/plex-sans/fonts/complete/woff/IBMPlexSans-{Regular,Bold}.woff" },
     "api/admin-password-reset.js": { "maxDuration": 60 }

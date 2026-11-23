@@ -1,3 +1,4 @@
+const detailNumber = location.pathname.match(/^\/admin\/orders\/([^/]+)\/?$/)?.[1];
 const page = document.body.dataset.adminPage || 'orders';
 
 const state = {
@@ -231,7 +232,10 @@ async function startSession(user) {
     showMessage(authMessage, '');
     showMessage(setupMessage, '');
 
-    if (page === 'orders') await loadOrders(renderOrdersPage);
+    if (page === 'orders') {
+        if (detailNumber) await loadOrderDetail(detailNumber);
+        else await loadOrders(renderOrdersPage);
+    }
     if (page === 'shipping') await loadOrders(renderShippingPage);
     if (page === 'users') await loadUsers();
     if (page === 'settings') await loadSettings();
@@ -247,6 +251,26 @@ async function loadOrders(renderer) {
     if (!response.ok) throw new Error('Objednávky se nepodařilo načíst.');
     state.orders = Array.isArray(data.orders) ? data.orders : [];
     renderer();
+}
+
+async function loadOrderDetail(number) {
+    document.querySelector('.stats').hidden = true;
+    document.querySelector('.orders-card').hidden = true;
+    document.querySelector('#order-navigation').hidden = false;
+    setText('.admin-header h1', 'Detail objednávky');
+    document.title = 'Detail objednávky · Administrace';
+    const message = document.querySelector('#order-error');
+    try {
+        const response = await fetch('/api/admin-orders?orderNumber=' + encodeURIComponent(number), { cache: 'no-store' });
+        if (response.status === 401) return setSignedOut('Přihlášení vypršelo. Přihlaste se znovu.');
+        if (response.status === 404) return showMessage(message, 'Objednávka nebyla nalezena.');
+        if (!response.ok) throw new Error('ORDER_LOAD_FAILED');
+        const { order } = await response.json();
+        document.title = order.orderNumber + ' · Administrace';
+        renderOrderDetail(order);
+    } catch {
+        showMessage(message, 'Detail objednávky se nepodařilo načíst.');
+    }
 }
 
 function filteredOrders() {
@@ -275,7 +299,13 @@ function renderOrdersPage() {
 
     orders.forEach((order) => {
         const tr = document.createElement('tr');
-        tr.appendChild(cell(order.orderNumber, dateLabel(order.createdAt)));
+        const numberCell = cell(order.orderNumber, dateLabel(order.createdAt));
+        const link = document.createElement('a');
+        link.className = 'order-row-link';
+        link.href = '/admin/orders/' + encodeURIComponent(order.orderNumber.toLowerCase());
+        link.append(numberCell.firstElementChild);
+        numberCell.prepend(link);
+        tr.appendChild(numberCell);
         tr.appendChild(cell(order.customer?.name, order.customer?.email));
         tr.appendChild(cell(order.productName, shippingName(order)));
         const paymentTd = document.createElement('td');
@@ -285,14 +315,6 @@ function renderOrdersPage() {
         appendShippingStatus(shippingTd, order);
         tr.appendChild(shippingTd);
         tr.appendChild(cell(price(order.totalAmount, order.currency), `doprava ${price(order.shipping?.price, order.currency)}`));
-        const actionTd = document.createElement('td');
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'detail-button';
-        button.dataset.orderNumber = order.orderNumber;
-        button.textContent = 'Detail';
-        actionTd.appendChild(button);
-        tr.appendChild(actionTd);
         body.appendChild(tr);
     });
 }
@@ -335,7 +357,6 @@ function renderOrderDetail(order) {
         paymentBadge.textContent = `${order.payment?.testMode ? 'TEST · ' : ''}${paymentLabel(order.payment?.status)}`;
     }
     detail.classList.add('open');
-    detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function renderShippingPage() {
@@ -520,16 +541,6 @@ if (setupForm) {
 if (logoutButton) {
     logoutButton.addEventListener('click', async () => {
         try { await fetch('/api/admin-auth', { method: 'DELETE' }); } finally { window.location.replace('/admin/orders'); }
-    });
-}
-
-const ordersBody = document.querySelector('#orders-body');
-if (ordersBody) {
-    ordersBody.addEventListener('click', (event) => {
-        const button = event.target.closest('[data-order-number]');
-        if (!button) return;
-        const order = state.orders.find((item) => item.orderNumber === button.dataset.orderNumber);
-        if (order) renderOrderDetail(order);
     });
 }
 

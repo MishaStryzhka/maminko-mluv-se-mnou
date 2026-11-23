@@ -1,4 +1,4 @@
-.gallery.gallery-pages{max-width:1050px;margin:30px 0 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:start}.gallery.gallery-pages img{display:block;width:100%;height:auto;aspect-ratio:210/297;object-fit:contain;background:#fff;border-radius:10px;border:1px solid #eee8ee;box-shadow:0 12px 28px #47365618}@media(max-width:850px){.gallery.gallery-pages{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}@media(max-width:520px){.gallery.gallery-pages{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
+.gallery.gallery-pages{max-width:1050px;margin:30px 0 0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;align-items:start}.gallery.gallery-pages img{display:block;width:100%;height:auto;aspect-ratio:210/297;object-fit:contain;background:#fff;border-radius:10px;border:1px solid #eee8ee;box-shadow:0 12px 28px #47365618}@media(max-width:850px){.gallery.gallery-pages{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}}@media(max-width:520px){.gallery.gallery-pages{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
 @media (max-width: 850px) {
     header {
         background: var(--bg, #fbf8f3);
@@ -7,19 +7,30 @@
     }
 }
 
+.sample-teaser {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #292231;
+    box-shadow: 0 12px 28px #47365618;
+}
+.gallery.gallery-pages .sample-teaser img {
+    filter: blur(4px) brightness(.48);
+    transform: scale(1.08);
+}
 .sample-offer {
-    align-self: stretch;
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 16px;
-    padding: clamp(8px, 2vw, 20px);
+    padding: 8px;
     text-align: center;
-    background: #f3eef6;
-    color: var(--d);
-    border: 1px solid #e4dbe8;
+    background: rgb(32 23 42 / 25%);
+    color: white;
     border-radius: 10px;
 }
-.sample-offer strong { font-size: clamp(16px, 2vw, 24px); }
+.sample-offer strong { font-size: clamp(15px, 1.5vw, 20px); }
 .sample-offer .btn { max-width: 100%; padding: 12px; white-space: normal; }

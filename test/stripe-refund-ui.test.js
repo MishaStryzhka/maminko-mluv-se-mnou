@@ -55,8 +55,8 @@ function adminUi() {
 
 function customerUi(lang = 'cs') {
     const selectors = [
-        '.paid-pill', '.success-icon', '.simulation-box strong', '.simulation-box span', '.success-lead',
-        '#order-reference', '#order-product', '#order-price', '#order-shipping', '#order-destination', '#order-total',
+        '.paid-pill', '.success-icon', '#status-title', '.success-lead', '.success-lead',
+        '.success-card', '#next-step', '#shipping-price', '#order-reference', '#order-product', '#order-price', '#order-shipping', '#order-destination', '#order-total',
         '#refund-summary', '#refund-summary-title', '#refund-refunded', '#refund-pending', '#refund-hold',
     ];
     const nodes = Object.fromEntries(selectors.map((selector) => [selector, new Element()]));
@@ -66,7 +66,7 @@ function customerUi(lang = 'cs') {
         'refundPendingAmount', 'refundHold',
     ];
     const shared = {
-        lead: '.success-lead', simulationTitle: '.simulation-box strong', simulationCopy: '.simulation-box span',
+        lead: '.success-lead', simulationTitle: '#status-title', simulationCopy: '.success-lead',
         refundSummary: '#refund-summary-title', refundHold: '#refund-hold',
     };
     const i18n = i18nKeys.map((key) => {
@@ -230,10 +230,10 @@ test('Every refund state has Czech and Ukrainian customer copy without repayment
                 assert.match(nodes['#refund-refunded'].textContent, /30,02\sKč/);
                 assert.match(nodes['#refund-pending'].textContent, /10,01\sKč/);
             }
-            const copy = ['.paid-pill', '.success-lead', '.simulation-box strong', '.simulation-box span', '[data-i18n="nextTitle"]', '[data-i18n="nextCopy"]']
+            const copy = ['.paid-pill', '#status-title', '.success-lead', '[data-i18n="nextTitle"]', '[data-i18n="nextCopy"]']
                 .map((selector) => nodes[selector].textContent).join(' ');
             assert.doesNotMatch(copy, /ČEKÁ NA PLATBU|ОЧІКУЄ ОПЛАТИ|Můžete vytvořit novou objednávku|Можете створити нове замовлення|připravíme ji k odeslání|підготуємо його до відправлення/i);
-            assert.match(copy, lang === 'cs' ? /neplaťte/ : /Не оплачуйте/);
+            assert.match(copy, lang === 'cs' ? /neplaťte/ : /не оплачуйте/i);
         }
     }
 });
@@ -244,28 +244,28 @@ test('TEST refunds in both languages remain explicitly synthetic and never sugge
             const { api, nodes } = customerUi(lang);
             api.setOrder(publicOrder(status, true));
             assert.match(nodes['.paid-pill'].textContent, /^TEST · /);
-            assert.match(nodes['.simulation-box strong'].textContent, /^TEST · /);
+            assert.match(nodes['#status-title'].textContent, /^TEST · /);
             assert.match(nodes['#refund-summary-title'].textContent, /^TEST · /);
-            assert.match(nodes['.simulation-box span'].textContent, lang === 'cs' ? /Nejde o skutečnou platbu/ : /Це не справжній платіж/);
+            assert.match(nodes['.success-lead'].textContent, lang === 'cs' ? /Nejde o skutečnou platbu/ : /Це не справжній платіж/);
             assert.equal(nodes['[data-i18n="nextTitle"]'].textContent, lang === 'cs' ? 'Testovací objednávka' : 'Тестове замовлення');
             assert.equal(nodes['[data-i18n="backCheckout"]'].hidden, true);
         }
     }
 });
 
-test('Legacy paid/test/pending/failed success wording remains unchanged when there is no refund', () => {
+test('Payment header follows the current paid, test, pending or failed state', () => {
     const { api, nodes } = customerUi('cs');
     api.setOrder({ ...publicOrder('full'), refund: undefined, payment_status: 'paid', payment_test_mode: false });
-    assert.equal(nodes['.simulation-box strong'].textContent, 'Platba potvrzena');
+    assert.equal(nodes['#status-title'].textContent, 'Děkujeme za objednávku!');
     assert.equal(nodes['#refund-summary'].hidden, true);
-    assert.equal(nodes['[data-i18n="backCheckout"]'].hidden, false);
+    assert.equal(nodes['[data-i18n="backCheckout"]'].hidden, true);
     api.setOrder({ ...publicOrder('full'), refund: { status: 'none' }, payment_status: 'paid', payment_test_mode: true });
-    assert.equal(nodes['.simulation-box strong'].textContent, 'Testovací platba potvrzena');
-    assert.equal(nodes['.simulation-box span'].textContent, 'Nejde o skutečnou platbu. Tuto objednávku neexpedujte.');
+    assert.equal(nodes['#status-title'].textContent, 'Testovací platba potvrzena');
+    assert.equal(nodes['.success-lead'].textContent, 'Nejde o skutečnou platbu. Tuto objednávku neexpedujte.');
     api.setOrder({ payment_status: 'pending' });
     assert.equal(nodes['.paid-pill'].textContent, 'ČEKÁ NA PLATBU');
     api.setOrder({ payment_status: 'failed' });
-    assert.equal(nodes['.simulation-box strong'].textContent, 'Platba nebyla dokončena');
+    assert.equal(nodes['#status-title'].textContent, 'Platba nebyla dokončena');
 });
 
 test('Unknown refund state or an explicit hold fails safe to review, and language switching keeps refund state', () => {

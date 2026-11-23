@@ -19,17 +19,13 @@
         </header>
 
         <main class="success-shell">
-            <div class="preview-badge" data-i18n="previewBadge">STAV OBJEDNÁVKY</div>
-            <div class="success-icon pending">…</div>
-            <h1 data-i18n="title">Stav objednávky</h1>
-            <p class="success-lead" data-i18n="lead">Ověřujeme stav platby. Objednávka se připraví až po jejím potvrzení.</p>
-
-            <div class="simulation-box" role="status" aria-live="polite">
-                <strong data-i18n="simulationTitle">Čekáme na potvrzení Stripe</strong>
-                <span data-i18n="simulationCopy">Platba se potvrzuje automaticky. Pokud jste právě zaplatili, chvíli prosím vyčkejte.</span>
+            <div class="success-icon pending loading" aria-hidden="true"></div>
+            <div aria-live="polite" aria-atomic="true">
+                <h1 id="status-title">Ověřujeme platbu…</h1>
+                <p class="success-lead"></p>
             </div>
 
-            <section class="success-card">
+            <section class="success-card" hidden>
                 <div class="success-card-head">
                     <div>
                         <span data-i18n="orderNumber">Číslo objednávky</span>
@@ -48,12 +44,13 @@
                         <span data-i18n="delivery">Doručení</span>
                         <strong id="order-shipping"></strong>
                         <small id="order-destination"></small>
+                        <small id="shipping-price"></small>
                     </div>
                     <div>
                         <span data-i18n="total">Celková cena</span>
                         <strong id="order-total"></strong>
                     </div>
-                    <div>
+                    <div id="next-step" hidden>
                         <span data-i18n="next">Co bude dál</span>
                         <strong data-i18n="nextTitle">Připravíme zásilku</strong>
                         <small data-i18n="nextCopy">Po potvrzení platby začneme objednávku připravovat. O odeslání vás budeme informovat.</small>
@@ -70,7 +67,7 @@
             </section>
 
             <div class="success-actions">
-                <a class="btn secondary" href="checkout.html" data-i18n="backCheckout">← Nová objednávka</a>
+                <a hidden class="btn secondary" href="checkout.html" data-i18n="backCheckout">← Nová objednávka</a>
                 <a class="btn primary" href="index.html" data-i18n="home">Zpět na hlavní stránku</a>
             </div>
         </main>

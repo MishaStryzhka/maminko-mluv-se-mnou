@@ -6,7 +6,6 @@
         <meta name="robots" content="noindex,nofollow" />
         <title>Objednávka · Maminko, mluv se mnou</title>
         <link rel="stylesheet" href="checkout.css" />
-        <link rel="stylesheet" href="review.css" />
         <link rel="stylesheet" href="stripe-status.css" />
     </head>
     <body>
@@ -143,32 +142,6 @@
                         </div>
                     </section>
 
-                    <section class="step-card compact" aria-labelledby="review-title">
-                        <div class="step-number">4</div>
-                        <div class="step-content">
-                            <h2 id="review-title" data-i18n="reviewTitle">Kontrola</h2>
-                            <label class="checkbox-row">
-                                <input type="checkbox" name="checked" required />
-                                <span data-i18n="confirmData">Potvrzuji, že jsem zkontroloval/a údaje objednávky.</span>
-                            </label>
-                            <label class="checkbox-row">
-                                <input type="checkbox" name="termsAccepted" required />
-                                <span>
-                                    <span id="legal-terms-text">Souhlasím s obchodními podmínkami a beru na vědomí informace o ochraně osobních údajů.</span>
-                                    <a href="obchodni-podminky.html" target="_blank" rel="noopener">Obchodní podmínky</a> ·
-                                    <a href="ochrana-osobnich-udaju.html" target="_blank" rel="noopener">Ochrana osobních údajů</a>
-                                </span>
-                            </label>
-                            <label class="checkbox-row" id="digital-consent-row">
-                                <input type="checkbox" name="digitalConsent" id="digital-consent" />
-                                <span id="digital-consent-text">U kompletního balíčku výslovně souhlasím se zpřístupněním digitálního obsahu ihned po zaplacení před uplynutím 14denní lhůty a beru na vědomí, že po zahájení plnění zaniká právo odstoupit od smlouvy v rozsahu digitálního obsahu.</span>
-                            </label>
-                            <p class="legal-note">Právní dokumenty se otevřou v nové kartě; před pokračováním je můžete kdykoli zkontrolovat.</p>
-                        </div>
-                    </section>
-
-                    <p id="checkout-error" class="field-error" role="alert" hidden></p>
-                    <button type="submit" class="btn primary submit-mobile" data-i18n="previewOrder" disabled>Zkontrolovat objednávku</button>
                 </form>
 
                 <aside class="summary-card" aria-labelledby="summary-title">
@@ -190,59 +163,26 @@
                         <span data-i18n="subtotal">Celkem včetně dopravy</span>
                         <strong id="summary-total"></strong>
                     </div>
-                    <p class="summary-note" data-i18n="shippingNote">Cenu dopravy uvidíte před přechodem k platbě.</p>
-                    <button type="submit" form="checkout-form" class="btn primary submit-desktop" data-i18n="previewOrder" disabled>Zkontrolovat objednávku</button>
-                    <div class="payment-note">
-                        <strong data-i18n="paymentNotLive">Platba zatím není aktivní</strong>
-                        <span data-i18n="paymentNext">Čekáme na dokončení aktivace Stripe. Platbu zatím nelze spustit.</span>
+                    <div class="checkout-consents">
+                        <label class="checkbox-row">
+                            <input form="checkout-form" type="checkbox" name="termsAccepted" required />
+                            <span>
+                                <span id="legal-terms-text">Souhlasím s obchodními podmínkami a beru na vědomí informace o ochraně osobních údajů.</span>
+                                <a href="obchodni-podminky.html" target="_blank" rel="noopener">Obchodní podmínky</a> ·
+                                <a href="ochrana-osobnich-udaju.html" target="_blank" rel="noopener">Ochrana osobních údajů</a>
+                            </span>
+                        </label>
+                        <label class="checkbox-row" id="digital-consent-row">
+                            <input form="checkout-form" type="checkbox" name="digitalConsent" id="digital-consent" />
+                            <span id="digital-consent-text">U kompletního balíčku výslovně souhlasím se zpřístupněním digitálního obsahu ihned po zaplacení před uplynutím 14denní lhůty a beru na vědomí, že po zahájení plnění zaniká právo odstoupit od smlouvy v rozsahu digitálního obsahu.</span>
+                        </label>
                     </div>
+                    <p id="checkout-error" class="field-error" role="alert" hidden></p>
+                    <button id="start-payment" type="submit" form="checkout-form" class="btn primary" data-i18n="pay" disabled>Zaplatit</button>
                 </aside>
             </div>
         </main>
 
-        <dialog id="review-dialog" class="review-dialog">
-            <div class="review-shell">
-                <div class="review-top">
-                    <div>
-                        <span class="summary-kicker" data-i18n="finalCheckKicker">Poslední kontrola</span>
-                        <h2 data-i18n="finalCheckTitle">Zkontrolujte objednávku</h2>
-                    </div>
-                    <button type="button" id="close-review" class="close-picker" aria-label="Close">×</button>
-                </div>
-                <p class="review-intro" data-i18n="finalCheckIntro">Před přechodem k platbě zkontrolujte kontaktní údaje, produkt a doručení.</p>
-                <div class="review-sections">
-                    <section>
-                        <span data-i18n="productTitle">Vyberte variantu</span>
-                        <strong id="review-product"></strong>
-                        <small id="review-price"></small>
-                    </section>
-                    <section>
-                        <span data-i18n="contactTitle">Kontaktní údaje</span>
-                        <strong id="review-name"></strong>
-                        <small id="review-email"></small>
-                        <small id="review-phone"></small>
-                    </section>
-                    <section>
-                        <span data-i18n="shippingTitle">Doručení</span>
-                        <strong id="review-shipping"></strong>
-                        <small id="review-destination"></small>
-                    </section>
-                </div>
-                <div class="review-total">
-                    <span data-i18n="subtotal">Celkem včetně dopravy</span>
-                    <strong id="review-total"></strong>
-                </div>
-                <div class="review-warning">
-                    <strong data-i18n="simulationTitle">Bezpečná platba přes Stripe</strong>
-                    <span data-i18n="simulationCopy">Po kliknutí vytvoříme objednávku a přesměrujeme vás na Stripe. Objednávku připravíme až po potvrzení úhrady.</span>
-                </div>
-                <p id="review-error" class="field-error" role="alert" hidden></p>
-                <div class="review-actions">
-                    <button type="button" class="btn secondary" id="edit-order" data-i18n="editOrder">Upravit údaje</button>
-                    <button type="button" class="btn primary" id="start-payment" data-i18n="previewPayment">Přejít k platbě</button>
-                </div>
-            </div>
-        </dialog>
 
         <dialog id="picker-dialog" class="picker-dialog">
             <div class="picker-shell">

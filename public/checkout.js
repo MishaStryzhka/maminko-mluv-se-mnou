@@ -36,7 +36,7 @@ const COPY = {
         pickerSubtitle: 'Oficiální vyhledávač Balíkovny',
         pickupMethod: 'Balíkovna / BOX',
         addressMethod: 'Balíkovna na adresu',
-        paymentStarting: 'Přesměrování na Stripe…',
+        paymentStarting: 'Načítání platby',
         paymentError: 'Platbu se nepodařilo zahájit. Zkuste to prosím znovu.',
         paymentUnavailable: 'Platby se zatím připravují. Zkuste to prosím později.',
         paymentCancelled: 'Platba byla zrušena. Zboží si můžete znovu objednat.',
@@ -78,7 +78,7 @@ const COPY = {
         pickerSubtitle: 'Офіційний пошук Balíkovna',
         pickupMethod: 'Balíkovna / BOX',
         addressMethod: 'Balíkovna на адресу',
-        paymentStarting: 'Перенаправлення на Stripe…',
+        paymentStarting: 'Завантаження оплати',
         paymentError: 'Не вдалося запустити оплату. Спробуйте ще раз.',
         paymentUnavailable: 'Оплата ще готується. Спробуйте пізніше.',
         paymentCancelled: 'Оплату скасовано. Ви можете оформити замовлення знову.',
@@ -263,8 +263,7 @@ async function startPayment() {
     const errorBox = document.querySelector('#checkout-error');
     errorBox.hidden = true;
     paymentPending = true;
-    payButton.disabled = true;
-    payButton.textContent = t('paymentStarting');
+    refreshPaymentAvailability();
     try {
         const response = await fetch('/api/checkout', {
             method: 'POST',
@@ -289,8 +288,7 @@ async function startPayment() {
         errorBox.textContent = t(error.message === 'PAYMENTS_NOT_READY' ? 'paymentUnavailable' : 'paymentError');
         errorBox.hidden = false;
         paymentPending = false;
-        payButton.disabled = false;
-        payButton.textContent = t('pay');
+        refreshPaymentAvailability();
     }
 }
 
@@ -373,7 +371,9 @@ function refreshPaymentAvailability() {
     status.hidden = state.checkoutEnabled && !state.sandbox;
     status.textContent = status.hidden ? '' : t(state.checkoutEnabled ? 'stripeTestBadge' : 'paymentUnavailable');
     payButton.disabled = !state.checkoutEnabled || paymentPending;
-    payButton.textContent = t(paymentPending ? 'paymentStarting' : 'pay');
+    payButton.setAttribute('aria-busy', String(paymentPending));
+    payButton.setAttribute('aria-label', t(paymentPending ? 'paymentStarting' : 'pay'));
+    payButton.textContent = t('pay');
 }
 
 loadCheckoutConfiguration();
@@ -383,3 +383,10 @@ if (new URLSearchParams(location.search).get('payment') === 'cancelled') {
     errorBox.textContent = t('paymentCancelled');
     errorBox.hidden = false;
 }
+
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted && paymentPending) {
+        paymentPending = false;
+        refreshPaymentAvailability();
+    }
+});

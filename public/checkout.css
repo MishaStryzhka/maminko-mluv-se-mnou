@@ -4,3 +4,26 @@
 .checkout-consents input { flex: 0 0 18px; }
 .checkout-consents a { color: var(--violet-dark); text-decoration: underline; }
 .summary-card .field-error { margin-bottom: 12px; }
+
+#start-payment[aria-busy="true"] {
+    position: relative;
+    color: transparent;
+    opacity: 1;
+    cursor: progress;
+}
+#start-payment[aria-busy="true"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgb(255 255 255 / 40%);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: checkout-spin .75s linear infinite;
+}
+@keyframes checkout-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+    #start-payment[aria-busy="true"]::after { animation: none; }
+}

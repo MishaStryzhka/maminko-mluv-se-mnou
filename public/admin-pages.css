@@ -12,7 +12,7 @@
 .order-row-link:focus-visible::after { outline: 2px solid var(--violet-dark); outline-offset: -2px; }
 #admin-content > [hidden] { display: none; }
 
-#order-detail { max-width: 860px; padding: clamp(20px, 3vw, 36px); color: var(--ink); }
+#order-detail { color: var(--ink); }
 .receipt-head, .receipt-lines > div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
 .receipt-head { align-items: flex-start; flex-wrap: wrap; }
 .receipt-head h2 { margin: 0; font-size: 22px; }

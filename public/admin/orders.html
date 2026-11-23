@@ -67,10 +67,12 @@
             <section class="orders-card">
                 <div class="section-head">
                     <div><h2>Poslední objednávky</h2><p>Přehled načtených objednávek, nikoli účetní výkaz. Čekající vratky se od přijaté částky neodečítají.</p></div>
-                    <div class="filters"><button type="button" class="on" data-filter="all">Vše</button><button type="button" data-filter="paid">Zaplacené (vč. vratek)</button><button type="button" data-filter="ready">K odeslání</button></div>
+                    <div class="filters"><button type="button" id="edit-orders" aria-pressed="false" data-admin-only hidden>Upravit</button><button type="button" class="on" data-filter="all">Vše</button><button type="button" data-filter="paid">Zaplacené (vč. vratek)</button><button type="button" data-filter="ready">K odeslání</button></div>
                 </div>
+                <p id="edit-orders-note" hidden>Odebrat lze testovací objednávky a objednávky bez úhrady starší než 24 hodin.</p>
+                <p id="edit-orders-result" role="status" hidden></p>
                 <div class="table-wrap">
-                    <table><thead><tr><th>Objednávka</th><th>Zákazník</th><th>Produkt</th><th>Platba</th><th>Doprava</th><th>Částka</th></tr></thead><tbody id="orders-body"></tbody></table>
+                    <table><thead><tr><th>Objednávka</th><th>Zákazník</th><th>Produkt</th><th>Platba</th><th>Doprava</th><th>Částka</th><th id="order-actions-heading" hidden>Akce</th></tr></thead><tbody id="orders-body"></tbody></table>
                 </div>
                 <p id="orders-empty" class="empty-state" hidden>Žádné objednávky pro tento filtr.</p>
             </section>

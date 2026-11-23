@@ -75,6 +75,7 @@ export async function initializeOrderSchema(sql) {
             paid_at timestamptz
         )
     `;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS admin_removed_at timestamptz`;
     // Existing GoPay-era databases need additive migrations as well.
     await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS stripe_session_id text`;
     await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_test_mode boolean NOT NULL DEFAULT false`;
@@ -464,6 +465,25 @@ export async function updatePaymentState(paymentId, gopayState, paymentStatus) {
     return rows[0] || null;
 }
 
+export async function removeOrderFromAdmin(orderNumber, options = {}) {
+    await (options.ensureSchema || ensureSchema)();
+    const sql = options.sql || getSql();
+    const rows = await sql`
+        UPDATE orders SET admin_removed_at = now()
+        WHERE order_number = ${orderNumber} AND admin_removed_at IS NULL
+          AND (payment_test_mode OR (
+              paid_at IS NULL AND payment_status IN ('pending', 'failed', 'cancelled')
+              AND created_at <= now() - interval '24 hours'
+              AND NOT stripe_refund_hold AND stripe_refunds = '{}'::jsonb
+              AND NOT EXISTS (SELECT 1 FROM stripe_refund_evidence r
+                  WHERE r.payment_intent_id = orders.stripe_payment_intent_id
+                    AND r.payment_test_mode = orders.payment_test_mode)
+          ))
+        RETURNING order_number
+    `;
+    return rows.length > 0;
+}
+
 export async function listOrdersForAdmin(limit = 100, options = {}) {
     await (options.ensureSchema || ensureSchema)();
     const sql = options.sql || getSql();
@@ -485,6 +505,12 @@ export async function listOrdersForAdmin(limit = 100, options = {}) {
                      AND r.payment_test_mode = orders.payment_test_mode) AS stripe_refund_hold
         FROM orders
         WHERE (${options.orderNumber ?? null}::text IS NULL OR order_number = ${options.orderNumber ?? null})
+          AND (admin_removed_at IS NULL OR (NOT payment_test_mode AND (
+              paid_at IS NOT NULL OR payment_status = 'paid' OR stripe_refund_hold OR stripe_refunds <> '{}'::jsonb
+              OR EXISTS (SELECT 1 FROM stripe_refund_evidence r
+                  WHERE r.payment_intent_id = orders.stripe_payment_intent_id
+                    AND r.payment_test_mode = orders.payment_test_mode)
+          )))
         ORDER BY created_at DESC
         LIMIT ${safeLimit}
     `;

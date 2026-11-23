@@ -5,7 +5,7 @@ import { PGlite } from '@electric-sql/pglite';
 import {
     initializeOrderSchema, updateStripePaymentState, updateStripeRefundState,
     claimPaidConfirmation, getConfirmationState, markConfirmationSent,
-    findOrderByPublicToken, listOrdersForAdmin,
+    findOrderByPublicToken, listOrdersForAdmin, removeOrderFromAdmin,
 } from '../api/_lib/db.js';
 import { refundPaymentView } from '../api/_lib/stripe-refunds.js';
 import { mapOrder } from '../api/admin-orders.js';
@@ -633,4 +633,19 @@ test('Manual confirmation resend requires the current attempt and preserves webh
     await markConfirmationSent(number, 'resend', f.options);
     assert.equal(await claimPaidConfirmation(number, 'replay', false, options), null);
     assert.equal((await f.row()).confirmation_email_attempts, 2);
+});
+
+test('Admin cleanup respects age, preserves paid orders and reveals late payments', async t => {
+    const f = await fixture(t, { paymentStatus: 'pending' });
+    const number = f.order.orderNumber;
+    assert.equal(await removeOrderFromAdmin(number, f.options), false);
+    await f.sql`UPDATE orders SET created_at = now() - interval '25 hours'`;
+    assert.equal(await removeOrderFromAdmin(f.other.orderNumber, f.options), false);
+    assert.equal(await removeOrderFromAdmin(number, f.options), true);
+    assert.equal((await listOrdersForAdmin(100, f.options)).length, 1);
+    await f.sql`UPDATE orders SET payment_status = 'paid', paid_at = now() WHERE order_number = ${number}`;
+    assert.equal((await listOrdersForAdmin(100, f.options)).length, 2);
+    await f.sql`UPDATE orders SET payment_test_mode = true, created_at = now() WHERE order_number = ${f.other.orderNumber}`;
+    assert.equal(await removeOrderFromAdmin(f.other.orderNumber, f.options), true);
+    assert.equal((await listOrdersForAdmin(100, f.options)).length, 1);
 });

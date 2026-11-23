@@ -49,3 +49,5 @@
 #resend-confirmation:hover:not(:disabled) { background: #594582; }
 #resend-confirmation:focus-visible { outline: 3px solid var(--violet); outline-offset: 3px; }
 #resend-confirmation:disabled { opacity: .65; cursor: wait; }
+
+#orders-body .remove-order { position: relative; z-index: 1; color: #913e45; }

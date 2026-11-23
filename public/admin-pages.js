@@ -325,25 +325,30 @@ function renderOrdersPage() {
 function renderOrderDetail(order) {
     const detail = document.querySelector('#order-detail');
     if (!detail) return;
-    setText('#detail-ref', order.orderNumber);
+    setText('.admin-header h1', order.orderNumber);
+    setText('#detail-date', dateLabel(order.createdAt));
     setText('#detail-name', order.customer?.name);
-    setText('#detail-contact', `${order.customer?.email || '—'} · ${order.customer?.phone || '—'}`);
+    setText('#detail-contact', [order.customer?.email, order.customer?.phone].filter(Boolean).join('\n'));
     setText('#detail-product', order.productName);
-    setText('#detail-price', `${price(order.productPrice, order.currency)} + doprava ${price(order.shipping?.price, order.currency)} = ${price(order.totalAmount, order.currency)}`);
-    setText('#detail-payment', `${order.payment?.testMode ? 'TEST · ' : ''}${paymentLabel(order.payment?.status)}`);
+    setText('#detail-price', price(order.productPrice, order.currency));
+    setText('#detail-freight', price(order.shipping?.price, order.currency));
+    setText('#detail-total', price(order.totalAmount, order.currency));
     const payment = order.payment || {};
     const paymentReference = payment.provider === 'stripe'
         ? `Stripe ${payment.testMode ? '(TEST) ' : ''}${payment.stripeSessionId || 'bez ID'} · ${payment.stripeState || '—'}`
         : payment.gopayPaymentId ? `GoPay ID: ${payment.gopayPaymentId} · ${payment.gopayState || '—'}` : 'Platební ID zatím není k dispozici';
     setText('#detail-gateway', paymentReference);
     const refund = payment.refund || {};
+    const refundSection = document.querySelector('#detail-refund-section');
+    if (refundSection) refundSection.hidden = !refund.hold && (!refund.status || refund.status === 'none');
     setText('#detail-refund', `${payment.testMode ? 'TEST · ' : ''}${refundLabel(refund.status)}`);
     setText('#detail-refund-amounts', refundAmounts(order));
     setText('#detail-refund-attempts', `Neúspěšné vratky: ${Number(refund.failedCount) || 0} · Zrušené vratky: ${Number(refund.canceledCount) || 0}`);
     showMessage(document.querySelector('#detail-refund-hold'), refund.hold
         ? `${payment.testMode ? 'TEST · ' : ''}Objednávka je pozastavena kvůli vrácení platby. Neexpedujte ji; již odeslanou zásilku a další postup prověřte.` : '');
-    setText('#detail-shipping', shippingName(order));
-    setText('#detail-destination', destination(order));
+    setText('#detail-shipping', order.shipping?.method === 'pickup' ? 'Výdejní místo Balíkovny' : shippingName(order));
+    const pickup = order.shipping?.pickup;
+    setText('#detail-destination', pickup ? [pickup.name, pickup.address || pickup.zip].filter(Boolean).join('\n') : destination(order));
     const email = order.confirmationEmail || {};
     const emailLabels = { pending: 'ČEKÁ', sending: 'ODESÍLÁ SE', sent: 'PŘIJATO SMTP SERVEREM', failed: 'CHYBA — ČEKÁ NA OPAKOVÁNÍ' };
     const testSuppressed = order.payment?.testMode && !email.attempts;

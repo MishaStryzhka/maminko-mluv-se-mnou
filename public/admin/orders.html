@@ -80,18 +80,28 @@
                 <p id="order-error" role="status" hidden></p>
             </div>
             <section class="detail-card" id="order-detail">
-                <div class="section-head"><div><span class="eyebrow">DETAIL OBJEDNÁVKY</span><h2 id="detail-ref">—</h2></div><span id="detail-payment-badge" class="status">—</span></div>
-                <div class="detail-grid">
-                    <article><span>Zákazník</span><strong id="detail-name">—</strong><small id="detail-contact">—</small></article>
-                    <article><span>Produkt</span><strong id="detail-product">—</strong><small id="detail-price">—</small></article>
-                    <article><span>Platba</span><strong id="detail-payment">—</strong><small id="detail-gateway">—</small></article>
-                    <article><span>Vrácení platby</span><strong id="detail-refund">—</strong><small id="detail-refund-amounts">—</small><small id="detail-refund-attempts">—</small></article>
-                    <article><span>Doručení</span><strong id="detail-shipping">—</strong><small id="detail-destination">—</small></article>
-                    <article><span>Potvrzovací e-mail</span><strong id="detail-email">—</strong><small id="detail-email-attempts">—</small></article>
-                    <article id="detail-digital" hidden><span>Souhlas s digitálním obsahem</span><strong id="detail-digital-consent">—</strong></article>
-                </div>
+                <header class="receipt-head">
+                    <div><h2>Souhrn objednávky</h2><p id="detail-date"></p></div>
+                    <span id="detail-payment-badge" class="status"></span>
+                </header>
                 <p id="detail-refund-hold" class="refund-hold-warning" role="status" hidden></p>
-                <div class="admin-actions"><a class="primary-action" href="/admin/shipping" style="padding:11px 14px;border-radius:10px;font-size:11px;font-weight:900;text-decoration:none">Přejít do zásilek</a></div>
+                <div class="receipt-lines">
+                    <div><span id="detail-product"></span><span id="detail-price"></span></div>
+                    <div><span>Doprava</span><span id="detail-freight"></span></div>
+                    <div class="receipt-total"><strong>Celkem</strong><strong id="detail-total"></strong></div>
+                </div>
+                <div class="receipt-parties">
+                    <section><h3>Zákazník</h3><strong id="detail-name"></strong><p id="detail-contact"></p></section>
+                    <section><h3>Doručení</h3><strong id="detail-shipping"></strong><p id="detail-destination"></p>
+                        <a href="/admin/shipping" data-sales-access>Přejít do zásilek →</a></section>
+                </div>
+                <section id="detail-refund-section" class="receipt-exception" hidden><h3>Vrácení platby</h3>
+                    <strong id="detail-refund"></strong><p id="detail-refund-amounts"></p><p id="detail-refund-attempts"></p></section>
+                <details class="receipt-more"><summary>Podrobnosti platby a potvrzení</summary>
+                    <section><h3>Platební brána</h3><p id="detail-gateway"></p></section>
+                    <section><h3>Potvrzovací e-mail</h3><strong id="detail-email"></strong><p id="detail-email-attempts"></p></section>
+                    <section id="detail-digital" hidden><h3>Souhlas s digitálním obsahem</h3><p id="detail-digital-consent"></p></section>
+                </details>
             </section>
         </div>
     </main>

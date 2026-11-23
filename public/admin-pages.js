@@ -287,6 +287,49 @@ function filteredOrders() {
     return state.orders;
 }
 
+let editingOrders = false;
+const editOrders = document.querySelector('#edit-orders');
+editOrders?.addEventListener('click', () => {
+    editingOrders = !editingOrders;
+    editOrders.textContent = editingOrders ? 'Hotovo' : 'Upravit';
+    editOrders.setAttribute('aria-pressed', String(editingOrders));
+    document.querySelector('#order-actions-heading').hidden = !editingOrders;
+    document.querySelector('#edit-orders-note').hidden = !editingOrders;
+    renderOrdersPage();
+});
+
+function orderActionCell(order) {
+    const td = document.createElement('td');
+    const payment = order.payment || {};
+    const oldUnpaid = !payment.paidAt && !payment.refund?.hold
+        && ['pending', 'failed', 'cancelled'].includes(payment.status)
+        && Date.now() - Date.parse(order.createdAt) >= 86400000;
+    if (!payment.testMode && !oldUnpaid) return td;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'detail-button remove-order';
+    button.textContent = 'Odebrat';
+    button.addEventListener('click', async () => {
+        if (!window.confirm('Odebrat objednávku ' + order.orderNumber + ' z přehledu?')) return;
+        button.disabled = true;
+        const result = document.querySelector('#edit-orders-result');
+        try {
+            const response = await fetch('/api/admin-orders', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Order-Action': 'remove-order' },
+                body: JSON.stringify({ orderNumber: order.orderNumber }),
+            });
+            showMessage(result, response.ok ? 'Objednávka byla odebrána z přehledu.' : 'Objednávku nelze odebrat.');
+            await loadOrders(renderOrdersPage);
+        } catch {
+            showMessage(result, 'Výsledek se nepodařilo ověřit. Obnovte stránku.');
+        } finally {
+            button.disabled = false;
+        }
+    });
+    td.appendChild(button);
+    return td;
+}
+
 function renderOrdersPage() {
     const paid = state.orders.filter((order) => wasPaid(order) && !order.payment?.testMode);
     const ready = state.orders.filter(readyToShip);
@@ -318,6 +361,7 @@ function renderOrdersPage() {
         appendShippingStatus(shippingTd, order);
         tr.appendChild(shippingTd);
         tr.appendChild(cell(price(order.totalAmount, order.currency), `doprava ${price(order.shipping?.price, order.currency)}`));
+        if (editingOrders && state.user?.role === 'admin') tr.appendChild(orderActionCell(order));
         body.appendChild(tr);
     });
 }

@@ -1,6 +1,6 @@
 import { getAdminSession } from './_lib/admin-auth.js';
 import { randomUUID } from 'node:crypto';
-import { claimPaidConfirmation, releaseConfirmationClaim, markConfirmationSent, listOrdersForAdmin } from './_lib/db.js';
+import { claimPaidConfirmation, releaseConfirmationClaim, markConfirmationSent, removeOrderFromAdmin, listOrdersForAdmin } from './_lib/db.js';
 import { refundPaymentView } from './_lib/stripe-refunds.js';
 
 export function mapOrder(row) {
@@ -74,6 +74,13 @@ export default async function handler(req, res) {
         }
 
         if (req.method === 'POST') {
+            if (req.headers['x-order-action'] === 'remove-order') {
+                if (user.role !== 'admin') return res.status(403).json({ error: 'FORBIDDEN' });
+                const number = req.body?.orderNumber;
+                if (typeof number !== 'string' || !number || number.length > 64) return res.status(400).json({ error: 'INVALID_REQUEST' });
+                const removed = await removeOrderFromAdmin(number);
+                return removed ? res.status(200).json({ removed }) : res.status(409).json({ error: 'ORDER_NOT_REMOVABLE' });
+            }
             if (!['admin', 'sales'].includes(user.role)) return res.status(403).json({ error: 'FORBIDDEN' });
             if (req.headers['x-order-action'] !== 'resend-confirmation') return res.status(400).json({ error: 'INVALID_ACTION' });
             const { orderNumber, attempts } = req.body || {};

@@ -335,7 +335,7 @@ export async function claimPaidConfirmation(orderNumber, claimId, allowTest = fa
                   product_code, product_name, product_price, shipping_method,
                   shipping_price, pickup_point_name, pickup_point_address,
                   pickup_point_zip, address_street, address_city, address_zip,
-                  total_amount
+                  total_amount, digital_consent_at
     `;
     return rows[0] || null;
 }
@@ -463,7 +463,7 @@ export async function listOrdersForAdmin(limit = 100, options = {}) {
                pickup_point_type, address_street, address_city, address_zip, address_country,
                total_amount, payment_status, payment_provider, payment_test_mode, gopay_payment_id, gopay_state,
                stripe_session_id, stripe_payment_intent_id, stripe_payment_status, paid_at,
-               confirmation_email_status, confirmation_email_attempts, confirmation_email_sent_at,
+               confirmation_email_status, confirmation_email_attempts, confirmation_email_sent_at, digital_consent_at,
                stripe_refunds || COALESCE((SELECT jsonb_object_agg(r.refund_id, r.record) FROM stripe_refund_evidence r
                          WHERE r.payment_intent_id = orders.stripe_payment_intent_id
                            AND r.payment_test_mode = orders.payment_test_mode), '{}'::jsonb) AS stripe_refunds,

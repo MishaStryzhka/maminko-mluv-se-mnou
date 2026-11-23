@@ -39,7 +39,9 @@ const translations = {
         address: 'Doručení',
         pickup: 'Balíkovna / výdejní místo',
         home: 'Balíkovna na adresu',
-        digital: 'Pokyny ke zpřístupnění digitálních materiálů vám zašleme samostatně.',
+        digitalConsent: 'Při objednávce jste výslovně souhlasili se zpřístupněním digitálního obsahu ihned po zaplacení, před uplynutím 14denní lhůty pro odstoupení od smlouvy. Potvrdili jste, že zahájením plnění zaniká vaše právo odstoupit od smlouvy v rozsahu digitálního obsahu.',
+        digital: 'Pozvánku do Telegram kanálu vám pošleme samostatně na tuto e-mailovou adresu.',
+        digitalTest: 'Digitální přístup ověřujeme samostatnou pozvánkou do testovacího Telegram kanálu.',
         closing: 'V případě dotazů nám odpovězte na tento e-mail.',
         signature: 'Tým Maminko, mluv se mnou',
         test: 'TEST — pouze zkouška integrace. Nejde o skutečnou platbu, objednávku ani potvrzení smlouvy. Zboží neodesílejte.',
@@ -57,7 +59,9 @@ const translations = {
         address: 'Адреса доставки',
         pickup: 'Balíkovna / пункт видачі',
         home: 'Balíkovna на адресу',
-        digital: 'Інструкції для доступу до цифрових матеріалів надішлемо окремо.',
+        digitalConsent: 'Під час оформлення замовлення ви прямо погодилися на надання цифрового контенту одразу після оплати, до закінчення 14-денного строку для відмови від договору. Ви підтвердили, що з початком надання втрачаєте право на відмову від договору в частині цифрового контенту.',
+        digital: 'Запрошення до Telegram-каналу надішлемо окремим листом на цю електронну адресу.',
+        digitalTest: 'Цифровий доступ перевіряємо окремим запрошенням до тестового Telegram-каналу.',
         closing: 'Якщо виникнуть запитання, дайте відповідь на цей лист.',
         signature: 'Команда Maminko, mluv se mnou',
         test: 'TEST — лише перевірка інтеграції. Це не справжня оплата, замовлення чи підтвердження договору. Не відправляйте товар.',
@@ -99,12 +103,16 @@ export function buildConfirmationEmail(order) {
         [tr.shippingPrice, price(order.shipping_price)],
         [tr.total, price(order.total_amount)],
     ];
-    const addendum = order.product_code === 'full' ? tr.digital : null;
+    const digitalParagraphs = [];
+    if (order.product_code === 'full') {
+        if (order.digital_consent_at) digitalParagraphs.push(tr.digitalConsent);
+        digitalParagraphs.push(test ? tr.digitalTest : tr.digital);
+    }
     const text = [
         `${tr.greeting}, ${order.customer_name}!`,
         '', test ? tr.test : tr.intro, '',
         ...rows.map(([label, value]) => `${label}: ${value}`),
-        ...(addendum ? ['', addendum] : []),
+        ...digitalParagraphs.flatMap((paragraph) => ['', paragraph]),
         '', tr.closing, '', tr.signature, 'GlamGarb Rentals s.r.o.',
     ].join('\n');
     const htmlRows = rows.map(([label, value]) =>
@@ -114,7 +122,7 @@ export function buildConfirmationEmail(order) {
         + `<p>${escapeHtml(tr.greeting)}, ${escapeHtml(order.customer_name)}!</p>`
         + `<p>${escapeHtml(test ? tr.test : tr.intro)}</p>`
         + `<table style="border-collapse:collapse">${htmlRows}</table>`
-        + (addendum ? `<p>${escapeHtml(addendum)}</p>` : '')
+        + digitalParagraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join('')
         + `<p>${escapeHtml(tr.closing)}</p><p>${escapeHtml(tr.signature)}<br>GlamGarb Rentals s.r.o.</p></div>`;
     return {
         subject: `${test ? '[TEST] ' : ''}${tr.subject} ${order.order_number}`,

@@ -34,6 +34,7 @@ function adminUi() {
         'order-detail', 'detail-ref', 'detail-name', 'detail-contact', 'detail-product', 'detail-price',
         'detail-payment', 'detail-gateway', 'detail-refund', 'detail-refund-amounts', 'detail-refund-attempts',
         'detail-refund-hold', 'detail-shipping', 'detail-destination', 'detail-email', 'detail-email-attempts',
+        'detail-digital', 'detail-digital-consent',
         'detail-payment-badge', 'ship-ready', 'ship-sent', 'ship-delivered', 'shipping-body', 'shipping-empty',
     ];
     const nodes = Object.fromEntries(ids.map((id) => [`#${id}`, new Element()]));
@@ -201,6 +202,17 @@ test('Shipping rows carry TEST payment markers and held refunds never show a rea
     assert.doesNotMatch(rows[0].children[3].textContent, /READY/);
     assert.match(rows[1].children[3].textContent, /ODESLÁNO.*již odeslanou zásilku prověřit/);
     assert.equal(nodes['#ship-ready'].textContent, '0');
+});
+
+test('Admin shows evidence of digital consent only for the full package', () => {
+    const { api, nodes } = adminUi();
+    api.renderOrderDetail(adminOrder({ productCode: 'full', digitalConsentAt: '2026-11-23T20:00:00Z' }));
+    assert.equal(nodes['#detail-digital'].hidden, false);
+    assert.match(nodes['#detail-digital-consent'].textContent, /23\.\s*11\.\s*2026/);
+    api.renderOrderDetail(adminOrder({ productCode: 'full', digitalConsentAt: null }));
+    assert.equal(nodes['#detail-digital-consent'].textContent, 'Souhlas není zaznamenán');
+    api.renderOrderDetail(adminOrder({ productCode: 'print' }));
+    assert.equal(nodes['#detail-digital'].hidden, true);
 });
 
 test('Every refund state has Czech and Ukrainian customer copy without repayment or shipping promises', () => {

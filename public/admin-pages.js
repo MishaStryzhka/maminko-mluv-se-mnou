@@ -324,6 +324,11 @@ function renderOrderDetail(order) {
     const testSuppressed = order.payment?.testMode && !email.attempts;
     setText('#detail-email', testSuppressed ? 'TEST — E-MAIL NEODESLÁN' : emailLabels[email.status] || '—');
     setText('#detail-email-attempts', `Pokusy: ${email.attempts || 0}${email.sentAt ? ` · ${dateLabel(email.sentAt)}` : ''}`);
+    const digital = document.querySelector('#detail-digital');
+    if (digital) {
+        digital.hidden = order.productCode !== 'full';
+        setText('#detail-digital-consent', order.digitalConsentAt ? dateLabel(order.digitalConsentAt) : 'Souhlas není zaznamenán');
+    }
     const paymentBadge = document.querySelector('#detail-payment-badge');
     if (paymentBadge) {
         paymentBadge.className = `status ${statusClass('payment', order.payment?.status)}`;

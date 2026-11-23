@@ -544,6 +544,21 @@ test('Normal paid order without refund still becomes ready only after confirmati
     assert.equal((await f.row()).stripe_refund_hold, false);
 });
 
+test('Confirmation and admin use the consent recorded for the full package', async (t) => {
+    const f = await fixture(t, { testMode: true, shippingStatus: 'not_ready' });
+    const consentAt = '2026-11-23T20:00:00.000Z';
+    await f.sql`UPDATE orders SET product_code = 'full', digital_consent_at = ${consentAt} WHERE id = ${f.order.id}`;
+    const claim = await claimPaidConfirmation(f.order.orderNumber, 'digital_consent_claim', true, f.options);
+    assert.equal(claim.product_code, 'full');
+    assert.equal(new Date(claim.digital_consent_at).toISOString(), consentAt);
+    const rows = await listOrdersForAdmin(100, f.options);
+    const adminOrder = mapOrder(rows.find((row) => row.order_number === f.order.orderNumber));
+    assert.equal(new Date(adminOrder.digitalConsentAt).toISOString(), consentAt);
+    assert.equal(mapOrder(rows.find((row) => row.order_number === f.other.orderNumber)).digitalConsentAt, null);
+    await markConfirmationSent(f.order.orderNumber, 'digital_consent_claim', f.options);
+    assert.equal((await f.row()).shipping_status, 'not_ready');
+});
+
 test('Refund updates only its correlated order, with no metadata-based retargeting', async (t) => {
     const f = await fixture(t);
     const firstBefore = await f.row();

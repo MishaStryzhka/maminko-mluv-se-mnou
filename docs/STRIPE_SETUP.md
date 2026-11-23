@@ -70,8 +70,10 @@ A reconciled, Stripe-signed paid event sends a Czech or Ukrainian confirmation
 from **info@maminko-mluv-se-mnou.cz**. The email contains the stored order number,
 product, delivery details and itemized total. It does not contain a card number,
 public order token or payment secrets. Replies go to the same shop mailbox.
-Digital-access instructions for the full package are still a separate business
-process; this email does not issue access automatically.
+For the full package, the confirmation records express consent to early digital
+delivery when the order has a stored consent timestamp. It confirms the effect
+on withdrawal for the digital material only. A separate email carries the
+actual Telegram invitation.
 
 The transport is fixed to `smtp.seznam.cz`, port **465**, with TLS and certificate
 validation enabled. Authentication uses the full mailbox address and
@@ -103,6 +105,23 @@ With the flag off, all test receipts are suppressed. With it on, both the helper
 database claim and SMTP sender restrict test receipts to the shop's own mailbox.
 There is no public endpoint for arbitrary mail sending. An SMTP acceptance alone
 does not prove inbox delivery; check the actual inbox and authentication headers.
+
+### Telegram handoff for the full package
+
+1. Open the order detail in admin. Confirm **Kompletní balíček**, a confirmed
+   payment, no refund hold, a recorded digital consent, and that the order
+   confirmation reached the shop's email server handoff (admin status
+   **PŘIJATO SMTP SERVEREM**). Check the confirmation has not bounced.
+2. Create a single-use invitation in the private Telegram channel. Send it from
+   the shop mailbox to the order email in a separate message with the order
+   number and a short instruction to open the invitation in Telegram. Keep the
+   sent message as the record. Before repeating a send, check that record and
+   the original invite status. Revoke an unused invitation before replacing it.
+3. For the Preview check, use a **TEST** full-package order addressed only to the
+   shop mailbox and an invitation to an empty private test channel. Confirm the
+   consent wording in the received confirmation, open the separate invitation
+   from an account that is not already a member, and verify that it joins the
+   test channel. Keep the order ineligible for shipping.
 
 ### Retries and operational visibility
 

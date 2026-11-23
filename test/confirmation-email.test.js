@@ -11,6 +11,7 @@ const sample = {
     customer_email: 'buyer@example.com',
     lang: 'cs',
     product_code: 'full',
+    digital_consent_at: '2026-11-23T20:00:00Z',
     product_name: 'Kompletní balíček',
     product_price: 750,
     shipping_method: 'pickup',
@@ -100,7 +101,11 @@ test('Czech confirmation includes paid totals, pickup details, seller, and digit
         assert.ok(result.text.includes(value));
         assert.ok(result.html.includes(value));
     }
-    assert.match(result.text, /Pokyny ke zpřístupnění digitálních materiálů/);
+    for (const body of [result.text, result.html]) {
+        assert.match(body, /výslovně souhlasili.*14denní lhůty/);
+        assert.match(body, /zahájením plnění zaniká.*v rozsahu digitálního obsahu/);
+        assert.match(body, /Pozvánku do Telegram kanálu/);
+    }
     assert.doesNotMatch(result.subject, /\[TEST\]/);
 });
 
@@ -109,8 +114,22 @@ test('Ukrainian print-only confirmation uses home delivery and omits digital fol
     assert.match(result.subject, /^Підтвердження прийняття замовлення /);
     assert.match(result.text, /Balíkovna на адресу/);
     assert.ok(result.text.includes('Testovací 21, 110 00, Praha, Česká republika'));
-    assert.doesNotMatch(result.text, /Інструкції для доступу до цифрових матеріалів/);
+    for (const body of [result.text, result.html]) assert.doesNotMatch(body, /Telegram|прямо погодилися/);
     assert.match(buildConfirmationEmail({ ...sample, lang: 'unknown' }).subject, /^Potvrzení/);
+});
+
+test('Ukrainian full-package confirmations mirror recorded consent; legacy confirmations never claim missing consent', () => {
+    const stored = buildConfirmationEmail({ ...sample, lang: 'uk' });
+    for (const body of [stored.text, stored.html]) {
+        assert.match(body, /прямо погодилися.*14-денного строку/);
+        assert.match(body, /з початком надання.*в частині цифрового контенту/);
+        assert.match(body, /Запрошення до Telegram-каналу/);
+    }
+    const legacy = buildConfirmationEmail({ ...sample, digital_consent_at: null });
+    for (const body of [legacy.text, legacy.html]) {
+        assert.doesNotMatch(body, /výslovně souhlasili|zaniká vaše právo/);
+        assert.match(body, /Pozvánku do Telegram kanálu/);
+    }
 });
 
 test('HTML confirmation escapes all untrusted display fields', () => {
@@ -139,6 +158,10 @@ test('Test confirmations have explicit non-payment and non-contract disclaimers 
         assert.ok(result.html.includes(disclaimer));
         assert.equal(result.text.includes(liveIntro), false);
         assert.equal(result.html.includes(liveIntro), false);
+        for (const body of [result.text, result.html]) {
+            assert.match(body, lang === 'cs' ? /testovacího Telegram kanálu/ : /тестового Telegram-каналу/);
+            assert.doesNotMatch(body, /Pozvánku do Telegram kanálu|Запрошення до Telegram-каналу/);
+        }
     }
 });
 

@@ -12,6 +12,7 @@ export function mapOrder(row) {
         productCode: row.product_code,
         productName: row.product_name,
         productPrice: row.product_price,
+        digitalConsentAt: row.digital_consent_at ?? null,
         currency: row.currency,
         customer: {
             name: row.customer_name,

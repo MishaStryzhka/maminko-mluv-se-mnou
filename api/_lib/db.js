@@ -482,6 +482,7 @@ export async function listOrdersForAdmin(limit = 100, options = {}) {
                    WHERE r.payment_intent_id = orders.stripe_payment_intent_id
                      AND r.payment_test_mode = orders.payment_test_mode) AS stripe_refund_hold
         FROM orders
+        WHERE (${options.orderNumber ?? null}::text IS NULL OR order_number = ${options.orderNumber ?? null})
         ORDER BY created_at DESC
         LIMIT ${safeLimit}
     `;

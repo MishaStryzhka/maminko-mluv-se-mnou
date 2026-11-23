@@ -26,6 +26,9 @@
         if (page === 'products') return true;
 
         if (page === 'orders') {
+            if (visible(document.querySelector('#order-navigation'))) {
+                return document.querySelector('#order-detail')?.classList.contains('open') || visible(document.querySelector('#order-error'));
+            }
             const rows = document.querySelector('#orders-body');
             const empty = document.querySelector('#orders-empty');
             return Boolean((rows && rows.children.length) || (empty && !empty.hidden));

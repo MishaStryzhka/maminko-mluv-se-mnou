@@ -70,11 +70,15 @@
                     <div class="filters"><button type="button" class="on" data-filter="all">Vše</button><button type="button" data-filter="paid">Zaplacené (vč. vratek)</button><button type="button" data-filter="ready">K odeslání</button></div>
                 </div>
                 <div class="table-wrap">
-                    <table><thead><tr><th>Objednávka</th><th>Zákazník</th><th>Produkt</th><th>Platba</th><th>Doprava</th><th>Částka</th><th></th></tr></thead><tbody id="orders-body"></tbody></table>
+                    <table><thead><tr><th>Objednávka</th><th>Zákazník</th><th>Produkt</th><th>Platba</th><th>Doprava</th><th>Částka</th></tr></thead><tbody id="orders-body"></tbody></table>
                 </div>
                 <p id="orders-empty" class="empty-state" hidden>Žádné objednávky pro tento filtr.</p>
             </section>
 
+            <div id="order-navigation" hidden>
+                <a class="back-store" href="/admin/orders">← Zpět na objednávky</a>
+                <p id="order-error" role="status" hidden></p>
+            </div>
             <section class="detail-card" id="order-detail">
                 <div class="section-head"><div><span class="eyebrow">DETAIL OBJEDNÁVKY</span><h2 id="detail-ref">—</h2></div><span id="detail-payment-badge" class="status">—</span></div>
                 <div class="detail-grid">

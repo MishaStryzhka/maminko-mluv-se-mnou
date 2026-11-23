@@ -620,3 +620,17 @@ test('Malformed refund events fail validation before any SQL is issued', async (
     }
     assert.equal(queryCount, 0);
 });
+
+test('Manual confirmation resend requires the current attempt and preserves webhook deduplication', async t => {
+    const f = await fixture(t);
+    const number = f.order.orderNumber;
+    assert.ok(await claimPaidConfirmation(number, 'original', false, f.options));
+    await markConfirmationSent(number, 'original', f.options);
+    assert.equal(await claimPaidConfirmation(number, 'webhook', false, f.options), null);
+    const options = { ...f.options, expectedAttempts: 1 };
+    assert.ok(await claimPaidConfirmation(number, 'resend', false, options));
+    assert.equal(await claimPaidConfirmation(number, 'concurrent', false, options), null);
+    await markConfirmationSent(number, 'resend', f.options);
+    assert.equal(await claimPaidConfirmation(number, 'replay', false, options), null);
+    assert.equal((await f.row()).confirmation_email_attempts, 2);
+});

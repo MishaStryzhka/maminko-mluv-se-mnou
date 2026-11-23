@@ -135,7 +135,7 @@ export function buildConfirmationEmail(order) {
     };
 }
 
-export async function sendConfirmationEmail(order, { createTransport = nodemailer.createTransport } = {}) {
+export async function sendConfirmationEmail(order, { createTransport = nodemailer.createTransport, resendId } = {}) {
     if (!smtpConfigurationReady()) {
         throw emailError('SMTP_NOT_CONFIGURED');
     }
@@ -169,7 +169,7 @@ export async function sendConfirmationEmail(order, { createTransport = nodemaile
             subject,
             text,
             html,
-            messageId: `<${order.order_number.toLowerCase()}.${order.payment_test_mode ? 'test-' : ''}confirmation@maminko-mluv-se-mnou.cz>`,
+            messageId: `<${order.order_number.toLowerCase()}.${order.payment_test_mode ? 'test-' : ''}confirmation${resendId ? "." + resendId : ""}@maminko-mluv-se-mnou.cz>`,
         });
         if (!result.accepted?.some((address) => String(address).toLowerCase() === order.customer_email.toLowerCase())) {
             throw emailError('SMTP_RECIPIENT_REJECTED');

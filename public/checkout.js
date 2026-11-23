@@ -177,7 +177,7 @@ function renderSummary() {
     const pointValue = document.querySelector('#summary-point');
     if (state.shipping === 'pickup' && state.pickup) {
         pointRow.hidden = false;
-        pointValue.textContent = `${state.pickup.name || 'Balíkovna'} · ${formatZip(state.pickup.zip)}`;
+        pointValue.textContent = state.pickup.name || 'Balíkovna';
     } else {
         pointRow.hidden = true;
         pointValue.textContent = '';

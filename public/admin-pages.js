@@ -1,4 +1,3 @@
-const detailNumber = location.pathname.match(/^\/admin\/orders\/([^/]+)\/?$/)?.[1];
 const page = document.body.dataset.adminPage || 'orders';
 
 const state = {
@@ -133,11 +132,19 @@ async function readJson(response) {
     return response.json().catch(() => ({}));
 }
 
-function cell(primary, secondary) {
+function cell(primary, secondary, href) {
     const td = document.createElement('td');
     const strong = document.createElement('strong');
     strong.textContent = primary || '—';
-    td.appendChild(strong);
+    if (href) {
+        const link = document.createElement('a');
+        link.className = 'order-row-link';
+        link.href = href;
+        link.appendChild(strong);
+        td.appendChild(link);
+    } else {
+        td.appendChild(strong);
+    }
     if (secondary) {
         const small = document.createElement('small');
         small.textContent = secondary;
@@ -233,6 +240,7 @@ async function startSession(user) {
     showMessage(setupMessage, '');
 
     if (page === 'orders') {
+        const detailNumber = window.location.pathname.match(/^\/admin\/orders\/([^/]+)\/?$/)?.[1];
         if (detailNumber) await loadOrderDetail(detailNumber);
         else await loadOrders(renderOrdersPage);
     }
@@ -299,13 +307,8 @@ function renderOrdersPage() {
 
     orders.forEach((order) => {
         const tr = document.createElement('tr');
-        const numberCell = cell(order.orderNumber, dateLabel(order.createdAt));
-        const link = document.createElement('a');
-        link.className = 'order-row-link';
-        link.href = '/admin/orders/' + encodeURIComponent(order.orderNumber.toLowerCase());
-        link.append(numberCell.firstElementChild);
-        numberCell.prepend(link);
-        tr.appendChild(numberCell);
+        const href = '/admin/orders/' + encodeURIComponent(order.orderNumber.toLowerCase());
+        tr.appendChild(cell(order.orderNumber, dateLabel(order.createdAt), href));
         tr.appendChild(cell(order.customer?.name, order.customer?.email));
         tr.appendChild(cell(order.productName, shippingName(order)));
         const paymentTd = document.createElement('td');

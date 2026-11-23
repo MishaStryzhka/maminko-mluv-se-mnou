@@ -3,15 +3,17 @@ const COPY = {
         previewBadge: 'STAV OBJEDNÁVKY',
         title: 'Stav objednávky',
         lead: 'Ověřujeme stav platby. Objednávka se připraví až po jejím potvrzení.',
-        simulationTitle: 'Čekáme na potvrzení Stripe',
+        simulationTitle: 'Ověřujeme platbu…',
         simulationCopy: 'Platba se potvrzuje automaticky. Pokud jste právě zaplatili, chvíli prosím vyčkejte.',
         orderNumber: 'Číslo objednávky',
         paid: 'ZAPLACENO',
         paidTest: 'TESTOVACÍ PLATBA',
         pending: 'ČEKÁ NA PLATBU',
         failed: 'NEZAPLACENO',
-        paidTitle: 'Platba potvrzena',
-        paidCopy: 'Děkujeme. Vaše objednávka byla zaplacena a připravíme ji k odeslání.',
+        paidTitle: 'Děkujeme za objednávku!',
+        paidCopy: 'Platbu {amount} jsme přijali.',
+        prepare: 'Vaši publikaci připravíme k odeslání.',
+        shippingPrice: 'Doprava',
         testPaidTitle: 'Testovací platba potvrzena',
         testPaidCopy: 'Nejde o skutečnou platbu. Tuto objednávku neexpedujte.',
         testNextTitle: 'Testovací objednávka',
@@ -55,15 +57,17 @@ const COPY = {
         previewBadge: 'СТАТУС ЗАМОВЛЕННЯ',
         title: 'Статус замовлення',
         lead: 'Перевіряємо статус оплати. Замовлення готуватиметься лише після підтвердження платежу.',
-        simulationTitle: 'Очікуємо підтвердження Stripe',
+        simulationTitle: 'Перевіряємо оплату…',
         simulationCopy: 'Оплата підтверджується автоматично. Якщо ви щойно заплатили, зачекайте трохи.',
         orderNumber: 'Номер замовлення',
         paid: 'ОПЛАЧЕНО',
         paidTest: 'ТЕСТОВА ОПЛАТА',
         pending: 'ОЧІКУЄ ОПЛАТИ',
         failed: 'НЕ ОПЛАЧЕНО',
-        paidTitle: 'Оплату підтверджено',
-        paidCopy: 'Дякуємо! Замовлення оплачено, ми підготуємо його до відправлення.',
+        paidTitle: 'Дякуємо за замовлення!',
+        paidCopy: 'Ми отримали вашу оплату — {amount}.',
+        prepare: 'Підготуємо ваш посібник до відправлення.',
+        shippingPrice: 'Доставка',
         testPaidTitle: 'Тестову оплату підтверджено',
         testPaidCopy: 'Це не справжній платіж. Не відправляйте це замовлення.',
         testNextTitle: 'Тестове замовлення',
@@ -146,14 +150,19 @@ function render() {
         ? `${testRefund ? 'TEST · ' : ''}${refundCopy.badge}` : t(statusKey);
     document.querySelector('.paid-pill').classList.toggle('pending', !paid);
     document.querySelector('.paid-pill').classList.toggle('refund', Boolean(refundCopy));
-    document.querySelector('.success-icon').textContent = errorState ? '×' : refundCopy ? '↶' : paid ? '✓' : failed ? '×' : '…';
+    document.querySelector('.success-icon').textContent = errorState ? '×' : refundCopy ? '↶' : paid ? '✓' : failed ? '×' : '';
     document.querySelector('.success-icon').classList.toggle('pending', !paid || Boolean(refundCopy));
-    document.querySelector('.simulation-box strong').textContent = refundCopy && !errorState
+    document.querySelector('#status-title').textContent = refundCopy && !errorState
         ? `${testRefund ? 'TEST · ' : ''}${refundCopy.title}` : t(titleKey);
-    document.querySelector('.simulation-box span').textContent = refundCopy && !errorState
-        ? `${testRefund ? `${t('testPaidCopy')} ` : ''}${refundCopy.copy}` : t(copyKey);
+    document.querySelector('.success-lead').textContent = refundCopy && !errorState
+        ? `${testRefund ? `${t('testPaidCopy')} ` : ''}${refundCopy.copy}` : t(copyKey).replace('{amount}', price(order?.total_amount));
+    if (!errorState && paid && !testPaid && !refundCopy && !['sent', 'shipped', 'delivered'].includes(order.shipping_status)) {
+        document.querySelector('.success-lead').textContent += ' ' + t('prepare');
+    }
+    document.querySelector('.success-icon').classList.toggle('loading', !errorState && !refundCopy && !paid && !failed);
+    document.querySelector('.success-card').hidden = !order || Boolean(errorState);
+    document.querySelector('#next-step').hidden = !refundCopy && !testPaid;
     if (refundCopy) {
-        document.querySelector('.success-lead').textContent = t(testRefund ? 'testRefundLead' : 'refundLead');
         document.querySelector('[data-i18n="nextTitle"]').textContent = t('refundNextTitle');
         document.querySelector('[data-i18n="nextCopy"]').textContent = t('refundNextCopy');
     }
@@ -166,7 +175,7 @@ function render() {
     document.querySelector('#refund-refunded').textContent = refundNeedsReview ? t('refundAmountUnknown') : price(order?.refund?.refundedAmount);
     document.querySelector('#refund-pending').textContent = refundNeedsReview ? t('refundAmountUnknown') : price(order?.refund?.pendingAmount);
     document.querySelector('#refund-hold').hidden = !refundCopy || !order?.refund?.hold;
-    document.querySelector('[data-i18n="backCheckout"]').hidden = Boolean(refundCopy);
+    document.querySelector('[data-i18n="backCheckout"]').hidden = !failed || Boolean(refundCopy) || Boolean(errorState);
     document.querySelector('#order-reference').textContent = order?.order_number || orderNumber || '—';
     document.querySelector('#order-product').textContent = order?.product_name || '—';
     document.querySelector('#order-price').textContent = order ? price(order.product_price) : '—';
@@ -174,6 +183,7 @@ function render() {
     document.querySelector('#order-destination').textContent = order?.shipping_method === 'pickup'
         ? [order.pickup_point_name, order.pickup_point_zip].filter(Boolean).join(' · ')
         : [order?.address_street, order?.address_zip, order?.address_city].filter(Boolean).join(', ');
+    document.querySelector('#shipping-price').textContent = order?.shipping_price != null ? t('shippingPrice') + ' · ' + price(order.shipping_price) : '';
     document.querySelector('#order-total').textContent = order ? price(order.total_amount) : '—';
 }
 

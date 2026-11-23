@@ -7,6 +7,7 @@
         <title>Objednávka přijata · Maminko, mluv se mnou</title>
         <link rel="stylesheet" href="checkout.css" />
         <link rel="stylesheet" href="success.css" />
+        <link rel="stylesheet" href="stripe-status.css" />
     </head>
     <body>
         <header class="checkout-header">
@@ -18,23 +19,23 @@
         </header>
 
         <main class="success-shell">
-            <div class="preview-badge" data-i18n="previewBadge">TESTOVACÍ NÁHLED</div>
-            <div class="success-icon">✓</div>
-            <h1 data-i18n="title">Děkujeme za objednávku</h1>
-            <p class="success-lead" data-i18n="lead">Platba byla úspěšná. Potvrzení objednávky jsme poslali na váš e-mail.</p>
+            <div class="preview-badge" data-i18n="previewBadge">STAV OBJEDNÁVKY</div>
+            <div class="success-icon pending">…</div>
+            <h1 data-i18n="title">Stav objednávky</h1>
+            <p class="success-lead" data-i18n="lead">Ověřujeme stav platby. Objednávka se připraví až po jejím potvrzení.</p>
 
-            <div class="simulation-box">
-                <strong data-i18n="simulationTitle">Toto je pouze preview</strong>
-                <span data-i18n="simulationCopy">Žádná platba neproběhla a objednávka nebyla uložena. Tato stránka simuluje stav po úspěšné platbě.</span>
+            <div class="simulation-box" role="status" aria-live="polite">
+                <strong data-i18n="simulationTitle">Čekáme na potvrzení Stripe</strong>
+                <span data-i18n="simulationCopy">Platba se potvrzuje automaticky. Pokud jste právě zaplatili, chvíli prosím vyčkejte.</span>
             </div>
 
             <section class="success-card">
                 <div class="success-card-head">
                     <div>
                         <span data-i18n="orderNumber">Číslo objednávky</span>
-                        <strong id="order-reference">PREVIEW</strong>
+                        <strong id="order-reference">—</strong>
                     </div>
-                    <div class="paid-pill" data-i18n="paid">ZAPLACENO</div>
+                    <div class="paid-pill pending">ČEKÁ NA PLATBU</div>
                 </div>
 
                 <div class="success-grid">
@@ -49,20 +50,27 @@
                         <small id="order-destination"></small>
                     </div>
                     <div>
-                        <span data-i18n="customer">Zákazník</span>
-                        <strong id="order-customer"></strong>
-                        <small id="order-email"></small>
+                        <span data-i18n="total">Celková cena</span>
+                        <strong id="order-total"></strong>
                     </div>
                     <div>
                         <span data-i18n="next">Co bude dál</span>
                         <strong data-i18n="nextTitle">Připravíme zásilku</strong>
-                        <small data-i18n="nextCopy">Po skutečném spuštění zde zákazník uvidí informaci o expedici a následně tracking Balíkovny.</small>
+                        <small data-i18n="nextCopy">Po potvrzení platby začneme objednávku připravovat. O odeslání vás budeme informovat.</small>
                     </div>
                 </div>
+                <section id="refund-summary" class="refund-summary" aria-labelledby="refund-summary-title" hidden>
+                    <h2 id="refund-summary-title" data-i18n="refundSummary">Vrácení platby</h2>
+                    <dl>
+                        <div><dt data-i18n="refundedAmount">Potvrzeně vráceno</dt><dd id="refund-refunded">—</dd></div>
+                        <div><dt data-i18n="refundPendingAmount">Čeká na vrácení</dt><dd id="refund-pending">—</dd></div>
+                    </dl>
+                    <p id="refund-hold" data-i18n="refundHold" role="status" hidden>Další zpracování objednávky je pozastaveno kvůli vrácení platby. Odeslání nyní nepotvrzujeme.</p>
+                </section>
             </section>
 
             <div class="success-actions">
-                <a class="btn secondary" href="checkout.html" data-i18n="backCheckout">← Zpět do checkoutu</a>
+                <a class="btn secondary" href="checkout.html" data-i18n="backCheckout">← Nová objednávka</a>
                 <a class="btn primary" href="index.html" data-i18n="home">Zpět na hlavní stránku</a>
             </div>
         </main>

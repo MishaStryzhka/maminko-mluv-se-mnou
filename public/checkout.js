@@ -1,9 +1,9 @@
 const COPY = {
     cs: {
         back: '← Zpět',
-        previewBadge: 'TESTOVACÍ NÁHLED',
+        previewBadge: 'PLATBA SE PŘIPRAVUJE',
         title: 'Objednávka',
-        intro: 'Vyplňte údaje a vyberte způsob doručení. V tomto náhledu se objednávka neodesílá a platba se nespouští.',
+        intro: 'Vyplňte údaje a vyberte způsob doručení. Na posledním kroku budete přesměrováni na zabezpečenou platbu Stripe.',
         productTitle: 'Vyberte variantu',
         fullName: 'Kompletní balíček',
         fullDesc: 'Tištěná publikace + digitální materiály v Telegram kanálu',
@@ -28,18 +28,23 @@ const COPY = {
         country: 'Země',
         reviewTitle: 'Kontrola',
         confirmData: 'Potvrzuji, že jsem zkontroloval/a údaje objednávky.',
-        legalNote: 'Obchodní podmínky a ochranu osobních údajů připojíme před spuštěním skutečných plateb.',
         previewOrder: 'Zkontrolovat objednávku',
         summaryKicker: 'Shrnutí',
         summaryTitle: 'Vaše objednávka',
         delivery: 'Doprava',
         pickup: 'Výdejní místo',
         shippingPrice: 'Cena dopravy',
-        shippingTbd: 'doplníme',
-        subtotal: 'Mezisoučet bez dopravy',
-        shippingNote: 'Přesnou cenu dopravy nastavíme po odsouhlasení vašeho smluvního ceníku Balíkovny.',
+        shippingTbd: 'Načítání…',
+        subtotal: 'Celkem včetně dopravy',
+        shippingNote: 'Cenu dopravy uvidíte před přechodem k platbě.',
         paymentNotLive: 'Platba zatím není aktivní',
-        paymentNext: 'Po schválení checkoutu sem připojíme platební bránu.',
+        paymentNext: 'Čekáme na dokončení aktivace Stripe. Platbu zatím nelze spustit.',
+        paymentReady: 'Bezpečná platba Stripe',
+        paymentReadyCopy: 'Po kontrole objednávky přejdete na zabezpečenou platební stránku.',
+        paymentTest: 'Testovací platba Stripe',
+        paymentTestCopy: 'Testovací režim. Neúčtují se skutečné peníze a objednávky se nesmějí expedovat.',
+        stripeTestBadge: 'TESTOVACÍ PLATBA',
+        stripeLiveBadge: 'BEZPEČNÁ PLATBA',
         pickerTitle: 'Vyberte Balíkovnu / BOX',
         pickerSubtitle: 'Oficiální vyhledávač Balíkovny',
         pickupMethod: 'Balíkovna / BOX',
@@ -47,16 +52,22 @@ const COPY = {
         finalCheckKicker: 'Poslední kontrola',
         finalCheckTitle: 'Zkontrolujte objednávku',
         finalCheckIntro: 'Před přechodem k platbě zkontrolujte kontaktní údaje, produkt a doručení.',
-        simulationTitle: 'Preview platebního kroku',
-        simulationCopy: 'Další tlačítko pouze zobrazí náhled stránky po úspěšné platbě. Peníze se nestrhnou a objednávka se neuloží.',
+        simulationTitle: 'Bezpečná platba přes Stripe',
+        simulationCopy: 'Po kliknutí vytvoříme objednávku a přesměrujeme vás na Stripe. Objednávku připravíme až po potvrzení úhrady.',
+        simulationTestTitle: 'Testovací režim Stripe',
+        simulationTestCopy: 'V tomto režimu lze použít pouze testovací platební údaje; skutečné peníze se nestrhnou.',
         editOrder: 'Upravit údaje',
-        previewPayment: 'Zobrazit náhled po platbě',
+        previewPayment: 'Přejít k platbě',
+        paymentStarting: 'Přesměrování na Stripe…',
+        paymentError: 'Platbu se nepodařilo zahájit. Zkuste to prosím znovu.',
+        paymentUnavailable: 'Platby se zatím připravují. Zkuste to prosím později.',
+        paymentCancelled: 'Platba byla zrušena. Zboží si můžete znovu objednat.',
     },
     uk: {
         back: '← Назад',
-        previewBadge: 'ТЕСТОВИЙ ПЕРЕГЛЯД',
+        previewBadge: 'ОПЛАТА ГОТУЄТЬСЯ',
         title: 'Замовлення',
-        intro: 'Заповніть дані та виберіть спосіб доставки. У цьому preview замовлення не надсилається й оплата не запускається.',
+        intro: 'Заповніть дані та виберіть доставку. Після перевірки замовлення ви перейдете на захищену сторінку Stripe.',
         productTitle: 'Виберіть варіант',
         fullName: 'Повний комплект',
         fullDesc: 'Друкований посібник + цифрові матеріали в Telegram-каналі',
@@ -81,18 +92,23 @@ const COPY = {
         country: 'Країна',
         reviewTitle: 'Перевірка',
         confirmData: 'Підтверджую, що перевірив/ла дані замовлення.',
-        legalNote: 'Умови продажу та захист персональних даних підключимо перед запуском реальних платежів.',
         previewOrder: 'Перевірити замовлення',
         summaryKicker: 'Підсумок',
         summaryTitle: 'Ваше замовлення',
         delivery: 'Доставка',
         pickup: 'Пункт видачі',
         shippingPrice: 'Вартість доставки',
-        shippingTbd: 'додамо',
-        subtotal: 'Проміжна сума без доставки',
-        shippingNote: 'Точну вартість доставки встановимо після погодження вашого договірного тарифу Balíkovna.',
+        shippingTbd: 'Завантаження…',
+        subtotal: 'Разом із доставкою',
+        shippingNote: 'Вартість доставки буде показана до переходу до оплати.',
         paymentNotLive: 'Оплата поки не активна',
-        paymentNext: 'Після погодження checkout підключимо сюди платіжну браму.',
+        paymentNext: 'Очікуємо завершення активації Stripe. Оплату поки запустити неможливо.',
+        paymentReady: 'Безпечна оплата Stripe',
+        paymentReadyCopy: 'Після перевірки замовлення ви перейдете на захищену платіжну сторінку.',
+        paymentTest: 'Тестова оплата Stripe',
+        paymentTestCopy: 'Тестовий режим. Реальні гроші не списуються, а замовлення не можна відправляти.',
+        stripeTestBadge: 'ТЕСТОВА ОПЛАТА',
+        stripeLiveBadge: 'БЕЗПЕЧНА ОПЛАТА',
         pickerTitle: 'Виберіть Balíkovna / BOX',
         pickerSubtitle: 'Офіційний пошук Balíkovna',
         pickupMethod: 'Balíkovna / BOX',
@@ -100,10 +116,16 @@ const COPY = {
         finalCheckKicker: 'Остання перевірка',
         finalCheckTitle: 'Перевірте замовлення',
         finalCheckIntro: 'Перед переходом до оплати перевірте контактні дані, товар і доставку.',
-        simulationTitle: 'Preview платіжного кроку',
-        simulationCopy: 'Наступна кнопка лише покаже макет сторінки після успішної оплати. Гроші не списуються, а замовлення не зберігається.',
+        simulationTitle: 'Безпечна оплата через Stripe',
+        simulationCopy: 'Після натискання створимо замовлення і перенаправимо вас на Stripe. До виконання замовлення перейдемо лише після підтвердження оплати.',
+        simulationTestTitle: 'Тестовий режим Stripe',
+        simulationTestCopy: 'Можна використовувати лише тестові платіжні дані; реальні гроші не списуються.',
         editOrder: 'Змінити дані',
-        previewPayment: 'Показати сторінку після оплати',
+        previewPayment: 'Перейти до оплати',
+        paymentStarting: 'Перенаправлення на Stripe…',
+        paymentError: 'Не вдалося запустити оплату. Спробуйте ще раз.',
+        paymentUnavailable: 'Оплата ще готується. Спробуйте пізніше.',
+        paymentCancelled: 'Оплату скасовано. Ви можете оформити замовлення знову.',
     },
 };
 
@@ -117,6 +139,9 @@ const state = {
     product: 'full',
     shipping: 'pickup',
     pickup: null,
+    shippingPrices: null,
+    checkoutEnabled: false,
+    sandbox: false,
 };
 
 const form = document.querySelector('#checkout-form');
@@ -159,6 +184,7 @@ function applyLanguage() {
     });
     renderSummary();
     if (reviewDialog.open) renderReview();
+    refreshPaymentAvailability();
 }
 
 function setShippingRequirements() {
@@ -185,10 +211,12 @@ function renderPickup() {
 
 function renderSummary() {
     const product = PRODUCTS[state.product];
+    const deliveryPrice = state.shippingPrices?.[state.shipping];
     document.querySelector('#summary-product-name').textContent = t(product.nameKey);
     document.querySelector('#summary-product-desc').textContent = t(product.descKey);
     document.querySelector('#summary-product-price').textContent = price(product.price);
-    document.querySelector('#summary-total').textContent = price(product.price);
+    document.querySelector('#summary-total').textContent = Number.isInteger(deliveryPrice) ? price(product.price + deliveryPrice) : price(product.price);
+    document.querySelector('#summary-shipping-price').textContent = Number.isInteger(deliveryPrice) ? price(deliveryPrice) : t('shippingTbd');
     document.querySelector('#summary-shipping').textContent = state.shipping === 'pickup' ? t('pickupMethod') : t('addressMethod');
 
     const pointRow = document.querySelector('#summary-point-row');
@@ -240,20 +268,17 @@ function destinationText(values) {
     return `${values.street}, ${values.zip} ${values.city}, Česká republika`;
 }
 
-function buildPreviewOrder() {
+function buildOrder() {
     const values = formValues();
     const product = PRODUCTS[state.product];
     return {
-        preview: true,
-        createdAt: new Date().toISOString(),
-        reference: `PREVIEW-${Date.now().toString().slice(-8)}`,
         lang: state.lang,
         product: state.product,
         productName: t(product.nameKey),
         productPrice: product.price,
         shipping: state.shipping,
         shippingName: state.shipping === 'pickup' ? t('pickupMethod') : t('addressMethod'),
-        shippingPrice: null,
+        shippingPrice: state.shippingPrices?.[state.shipping] ?? 0,
         customer: {
             name: values.name,
             email: values.email,
@@ -268,7 +293,7 @@ function buildPreviewOrder() {
 }
 
 function renderReview() {
-    const order = buildPreviewOrder();
+    const order = buildOrder();
     document.querySelector('#review-product').textContent = order.productName;
     document.querySelector('#review-price').textContent = price(order.productPrice);
     document.querySelector('#review-name').textContent = order.customer.name;
@@ -276,7 +301,7 @@ function renderReview() {
     document.querySelector('#review-phone').textContent = order.customer.phone;
     document.querySelector('#review-shipping').textContent = order.shippingName;
     document.querySelector('#review-destination').textContent = order.destination;
-    document.querySelector('#review-total').textContent = price(order.productPrice);
+    document.querySelector('#review-total').textContent = price(order.productPrice + order.shippingPrice);
     return order;
 }
 
@@ -317,10 +342,41 @@ document.querySelector('#close-picker').addEventListener('click', closePicker);
 document.querySelector('#close-review').addEventListener('click', closeReview);
 document.querySelector('#edit-order').addEventListener('click', closeReview);
 
-document.querySelector('#preview-success').addEventListener('click', () => {
-    const order = renderReview();
-    sessionStorage.setItem('maminko-preview-order', JSON.stringify(order));
-    location.href = 'success.html?preview=1';
+const payButton = document.querySelector('#start-payment');
+
+document.querySelector('#start-payment').addEventListener('click', async () => {
+    if (!state.checkoutEnabled || !state.shippingPrices) return;
+    const order = buildOrder();
+    const errorBox = document.querySelector('#review-error');
+    errorBox.hidden = true;
+    payButton.disabled = true;
+    payButton.textContent = t('paymentStarting');
+    try {
+        const response = await fetch('/api/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                product: order.product,
+                lang: order.lang,
+                shipping: order.shipping,
+                customer: order.customer,
+                address: order.address,
+                pickup: order.pickup,
+                termsAccepted: form.elements.termsAccepted.checked,
+                digitalConsent: form.elements.digitalConsent.checked,
+            }),
+        });
+        const result = await response.json();
+        if (!response.ok || !/^https:\/\/checkout\.stripe\.com\//.test(result.payment?.gatewayUrl || '')) {
+            throw new Error(result.error || 'CHECKOUT_FAILED');
+        }
+        location.assign(result.payment.gatewayUrl);
+    } catch (error) {
+        errorBox.textContent = t(error.message === 'PAYMENTS_NOT_READY' ? 'paymentUnavailable' : 'paymentError');
+        errorBox.hidden = false;
+        payButton.disabled = false;
+        payButton.textContent = t('previewPayment');
+    }
 });
 
 pickerDialog.addEventListener('click', (event) => {
@@ -371,9 +427,60 @@ form.addEventListener('submit', (event) => {
         return;
     }
 
+    if (!state.checkoutEnabled || !state.shippingPrices) {
+        const errorBox = document.querySelector('#checkout-error');
+        errorBox.textContent = t('paymentUnavailable');
+        errorBox.hidden = false;
+        return;
+    }
+
     openReview();
 });
 
 setShippingRequirements();
 renderPickup();
 applyLanguage();
+
+async function loadCheckoutConfiguration() {
+    try {
+        const response = await fetch('/api/checkout-config', { cache: 'no-store' });
+        if (!response.ok) throw new Error('CONFIG_FAILED');
+        const config = await response.json();
+        if (!Number.isInteger(config.shipping?.pickup) || !Number.isInteger(config.shipping?.address)) throw new Error('CONFIG_INVALID');
+        state.shippingPrices = config.shipping;
+        state.checkoutEnabled = config.stripeEnabled === true;
+        state.sandbox = config.sandbox === true;
+    } catch (error) {
+        console.warn('Could not load checkout configuration', error?.message);
+    }
+    renderSummary();
+    refreshPaymentAvailability();
+}
+
+function refreshPaymentAvailability() {
+    const badge = document.querySelector('.checkout-heading .preview-badge');
+    const note = document.querySelector('.payment-note');
+    const warning = document.querySelector('.review-warning');
+    if (state.checkoutEnabled) {
+        badge.textContent = t(state.sandbox ? 'stripeTestBadge' : 'stripeLiveBadge');
+        note.querySelector('strong').textContent = t(state.sandbox ? 'paymentTest' : 'paymentReady');
+        note.querySelector('span').textContent = t(state.sandbox ? 'paymentTestCopy' : 'paymentReadyCopy');
+        warning.querySelector('strong').textContent = t(state.sandbox ? 'simulationTestTitle' : 'simulationTitle');
+        warning.querySelector('span').textContent = t(state.sandbox ? 'simulationTestCopy' : 'simulationCopy');
+    } else {
+        badge.textContent = t('previewBadge');
+        note.querySelector('strong').textContent = t('paymentNotLive');
+        note.querySelector('span').textContent = t('paymentNext');
+    }
+    document.querySelectorAll('[type="submit"][form="checkout-form"], #checkout-form [type="submit"]').forEach((button) => {
+        button.disabled = !state.checkoutEnabled;
+    });
+}
+
+loadCheckoutConfiguration();
+
+if (new URLSearchParams(location.search).get('payment') === 'cancelled') {
+    const errorBox = document.querySelector('#checkout-error');
+    errorBox.textContent = t('paymentCancelled');
+    errorBox.hidden = false;
+}

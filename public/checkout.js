@@ -26,9 +26,7 @@ const COPY = {
         city: 'Město',
         zip: 'PSČ',
         country: 'Země',
-        reviewTitle: 'Kontrola',
-        confirmData: 'Potvrzuji, že jsem zkontroloval/a údaje objednávky.',
-        previewOrder: 'Zkontrolovat objednávku',
+        pay: 'Zaplatit',
         summaryKicker: 'Shrnutí',
         summaryTitle: 'Vaše objednávka',
         delivery: 'Doprava',
@@ -36,28 +34,12 @@ const COPY = {
         shippingPrice: 'Cena dopravy',
         shippingTbd: 'Načítání…',
         subtotal: 'Celkem včetně dopravy',
-        shippingNote: 'Cenu dopravy uvidíte před přechodem k platbě.',
-        paymentNotLive: 'Platba zatím není aktivní',
-        paymentNext: 'Čekáme na dokončení aktivace Stripe. Platbu zatím nelze spustit.',
-        paymentReady: 'Bezpečná platba Stripe',
-        paymentReadyCopy: 'Po kontrole objednávky přejdete na zabezpečenou platební stránku.',
-        paymentTest: 'Testovací platba Stripe',
-        paymentTestCopy: 'Testovací režim. Neúčtují se skutečné peníze a objednávky se nesmějí expedovat.',
         stripeTestBadge: 'TESTOVACÍ PLATBA',
         stripeLiveBadge: 'BEZPEČNÁ PLATBA',
         pickerTitle: 'Vyberte Balíkovnu / BOX',
         pickerSubtitle: 'Oficiální vyhledávač Balíkovny',
         pickupMethod: 'Balíkovna / BOX',
         addressMethod: 'Balíkovna na adresu',
-        finalCheckKicker: 'Poslední kontrola',
-        finalCheckTitle: 'Zkontrolujte objednávku',
-        finalCheckIntro: 'Před přechodem k platbě zkontrolujte kontaktní údaje, produkt a doručení.',
-        simulationTitle: 'Bezpečná platba přes Stripe',
-        simulationCopy: 'Po kliknutí vytvoříme objednávku a přesměrujeme vás na Stripe. Objednávku připravíme až po potvrzení úhrady.',
-        simulationTestTitle: 'Testovací režim Stripe',
-        simulationTestCopy: 'V tomto režimu lze použít pouze testovací platební údaje; skutečné peníze se nestrhnou.',
-        editOrder: 'Upravit údaje',
-        previewPayment: 'Přejít k platbě',
         paymentStarting: 'Přesměrování na Stripe…',
         paymentError: 'Platbu se nepodařilo zahájit. Zkuste to prosím znovu.',
         paymentUnavailable: 'Platby se zatím připravují. Zkuste to prosím později.',
@@ -90,9 +72,7 @@ const COPY = {
         city: 'Місто',
         zip: 'PSČ',
         country: 'Країна',
-        reviewTitle: 'Перевірка',
-        confirmData: 'Підтверджую, що перевірив/ла дані замовлення.',
-        previewOrder: 'Перевірити замовлення',
+        pay: 'Оплатити',
         summaryKicker: 'Підсумок',
         summaryTitle: 'Ваше замовлення',
         delivery: 'Доставка',
@@ -100,28 +80,12 @@ const COPY = {
         shippingPrice: 'Вартість доставки',
         shippingTbd: 'Завантаження…',
         subtotal: 'Разом із доставкою',
-        shippingNote: 'Вартість доставки буде показана до переходу до оплати.',
-        paymentNotLive: 'Оплата поки не активна',
-        paymentNext: 'Очікуємо завершення активації Stripe. Оплату поки запустити неможливо.',
-        paymentReady: 'Безпечна оплата Stripe',
-        paymentReadyCopy: 'Після перевірки замовлення ви перейдете на захищену платіжну сторінку.',
-        paymentTest: 'Тестова оплата Stripe',
-        paymentTestCopy: 'Тестовий режим. Реальні гроші не списуються, а замовлення не можна відправляти.',
         stripeTestBadge: 'ТЕСТОВА ОПЛАТА',
         stripeLiveBadge: 'БЕЗПЕЧНА ОПЛАТА',
         pickerTitle: 'Виберіть Balíkovna / BOX',
         pickerSubtitle: 'Офіційний пошук Balíkovna',
         pickupMethod: 'Balíkovna / BOX',
         addressMethod: 'Balíkovna на адресу',
-        finalCheckKicker: 'Остання перевірка',
-        finalCheckTitle: 'Перевірте замовлення',
-        finalCheckIntro: 'Перед переходом до оплати перевірте контактні дані, товар і доставку.',
-        simulationTitle: 'Безпечна оплата через Stripe',
-        simulationCopy: 'Після натискання створимо замовлення і перенаправимо вас на Stripe. До виконання замовлення перейдемо лише після підтвердження оплати.',
-        simulationTestTitle: 'Тестовий режим Stripe',
-        simulationTestCopy: 'Можна використовувати лише тестові платіжні дані; реальні гроші не списуються.',
-        editOrder: 'Змінити дані',
-        previewPayment: 'Перейти до оплати',
         paymentStarting: 'Перенаправлення на Stripe…',
         paymentError: 'Не вдалося запустити оплату. Спробуйте ще раз.',
         paymentUnavailable: 'Оплата ще готується. Спробуйте пізніше.',
@@ -146,7 +110,6 @@ const state = {
 
 const form = document.querySelector('#checkout-form');
 const pickerDialog = document.querySelector('#picker-dialog');
-const reviewDialog = document.querySelector('#review-dialog');
 const pickupPanel = document.querySelector('#pickup-panel');
 const addressPanel = document.querySelector('#address-panel');
 const pickupEmpty = document.querySelector('#pickup-empty');
@@ -183,7 +146,6 @@ function applyLanguage() {
         button.classList.toggle('on', button.dataset.lang === state.lang);
     });
     renderSummary();
-    if (reviewDialog.open) renderReview();
     refreshPaymentAvailability();
 }
 
@@ -241,11 +203,6 @@ function closePicker() {
     else pickerDialog.removeAttribute('open');
 }
 
-function closeReview() {
-    if (typeof reviewDialog.close === 'function' && reviewDialog.open) reviewDialog.close();
-    else reviewDialog.removeAttribute('open');
-}
-
 function formValues() {
     const data = new FormData(form);
     return {
@@ -258,57 +215,22 @@ function formValues() {
     };
 }
 
-function destinationText(values) {
-    if (state.shipping === 'pickup') {
-        if (!state.pickup) return '';
-        const main = state.pickup.name || 'Balíkovna';
-        const detail = state.pickup.address || `${formatZip(state.pickup.zip)} ${state.pickup.name || ''}`.trim();
-        return `${main} · ${detail}`;
-    }
-    return `${values.street}, ${values.zip} ${values.city}, Česká republika`;
-}
-
 function buildOrder() {
     const values = formValues();
-    const product = PRODUCTS[state.product];
     return {
         lang: state.lang,
         product: state.product,
-        productName: t(product.nameKey),
-        productPrice: product.price,
         shipping: state.shipping,
-        shippingName: state.shipping === 'pickup' ? t('pickupMethod') : t('addressMethod'),
-        shippingPrice: state.shippingPrices?.[state.shipping] ?? 0,
         customer: {
             name: values.name,
             email: values.email,
             phone: values.phone,
         },
-        destination: destinationText(values),
         address: state.shipping === 'address'
             ? { street: values.street, city: values.city, zip: values.zip, country: 'CZ' }
             : null,
         pickup: state.shipping === 'pickup' ? state.pickup : null,
     };
-}
-
-function renderReview() {
-    const order = buildOrder();
-    document.querySelector('#review-product').textContent = order.productName;
-    document.querySelector('#review-price').textContent = price(order.productPrice);
-    document.querySelector('#review-name').textContent = order.customer.name;
-    document.querySelector('#review-email').textContent = order.customer.email;
-    document.querySelector('#review-phone').textContent = order.customer.phone;
-    document.querySelector('#review-shipping').textContent = order.shippingName;
-    document.querySelector('#review-destination').textContent = order.destination;
-    document.querySelector('#review-total').textContent = price(order.productPrice + order.shippingPrice);
-    return order;
-}
-
-function openReview() {
-    renderReview();
-    if (typeof reviewDialog.showModal === 'function') reviewDialog.showModal();
-    else reviewDialog.setAttribute('open', '');
 }
 
 document.querySelectorAll('[data-lang]').forEach((button) => {
@@ -339,16 +261,16 @@ document.querySelectorAll('input[name="shipping"]').forEach((radio) => {
 document.querySelector('#open-picker').addEventListener('click', openPicker);
 document.querySelector('#change-picker').addEventListener('click', openPicker);
 document.querySelector('#close-picker').addEventListener('click', closePicker);
-document.querySelector('#close-review').addEventListener('click', closeReview);
-document.querySelector('#edit-order').addEventListener('click', closeReview);
-
 const payButton = document.querySelector('#start-payment');
 
-document.querySelector('#start-payment').addEventListener('click', async () => {
-    if (!state.checkoutEnabled || !state.shippingPrices) return;
+let paymentPending = false;
+
+async function startPayment() {
+    if (payButton.disabled) return;
     const order = buildOrder();
-    const errorBox = document.querySelector('#review-error');
+    const errorBox = document.querySelector('#checkout-error');
     errorBox.hidden = true;
+    paymentPending = true;
     payButton.disabled = true;
     payButton.textContent = t('paymentStarting');
     try {
@@ -374,17 +296,14 @@ document.querySelector('#start-payment').addEventListener('click', async () => {
     } catch (error) {
         errorBox.textContent = t(error.message === 'PAYMENTS_NOT_READY' ? 'paymentUnavailable' : 'paymentError');
         errorBox.hidden = false;
+        paymentPending = false;
         payButton.disabled = false;
-        payButton.textContent = t('previewPayment');
+        payButton.textContent = t('pay');
     }
-});
+}
 
 pickerDialog.addEventListener('click', (event) => {
     if (event.target === pickerDialog) closePicker();
-});
-
-reviewDialog.addEventListener('click', (event) => {
-    if (event.target === reviewDialog) closeReview();
 });
 
 window.addEventListener('message', (event) => {
@@ -434,7 +353,7 @@ form.addEventListener('submit', (event) => {
         return;
     }
 
-    openReview();
+    startPayment();
 });
 
 setShippingRequirements();
@@ -459,22 +378,11 @@ async function loadCheckoutConfiguration() {
 
 function refreshPaymentAvailability() {
     const badge = document.querySelector('.checkout-heading .preview-badge');
-    const note = document.querySelector('.payment-note');
-    const warning = document.querySelector('.review-warning');
-    if (state.checkoutEnabled) {
-        badge.textContent = t(state.sandbox ? 'stripeTestBadge' : 'stripeLiveBadge');
-        note.querySelector('strong').textContent = t(state.sandbox ? 'paymentTest' : 'paymentReady');
-        note.querySelector('span').textContent = t(state.sandbox ? 'paymentTestCopy' : 'paymentReadyCopy');
-        warning.querySelector('strong').textContent = t(state.sandbox ? 'simulationTestTitle' : 'simulationTitle');
-        warning.querySelector('span').textContent = t(state.sandbox ? 'simulationTestCopy' : 'simulationCopy');
-    } else {
-        badge.textContent = t('previewBadge');
-        note.querySelector('strong').textContent = t('paymentNotLive');
-        note.querySelector('span').textContent = t('paymentNext');
-    }
-    document.querySelectorAll('[type="submit"][form="checkout-form"], #checkout-form [type="submit"]').forEach((button) => {
-        button.disabled = !state.checkoutEnabled;
-    });
+    badge.textContent = state.checkoutEnabled
+        ? t(state.sandbox ? 'stripeTestBadge' : 'stripeLiveBadge')
+        : t('previewBadge');
+    payButton.disabled = !state.checkoutEnabled || paymentPending;
+    payButton.textContent = t(paymentPending ? 'paymentStarting' : 'pay');
 }
 
 loadCheckoutConfiguration();

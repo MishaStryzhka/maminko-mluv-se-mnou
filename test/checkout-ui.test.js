@@ -44,15 +44,15 @@ async function openCheckout(t, config) {
 
 test('Disabled Stripe cannot create a preview-paid order', { skip: !runBrowserTests }, async (t) => {
     const page = await openCheckout(t, { enabled: false });
-    assert.equal(await page.locator('.submit-desktop').isDisabled(), true);
+    assert.equal(await page.locator('#start-payment').isDisabled(), true);
     assert.equal(await page.locator('#summary-total').textContent(), '839 Kč');
     assert.equal(await page.locator('#preview-success').count(), 0);
-    assert.match(await page.locator('.payment-note').textContent(), /Stripe/);
+    assert.equal(await page.locator('#pickup-selected').isVisible(), false);
 });
 
 test('Enabled checkout submits validated order to API and exposes failure', { skip: !runBrowserTests }, async (t) => {
     const page = await openCheckout(t, { enabled: true });
-    assert.equal(await page.locator('.submit-desktop').isEnabled(), true);
+    assert.equal(await page.locator('#start-payment').isEnabled(), true);
     await page.locator('input[name="name"]').fill('Jan Novák');
     await page.locator('input[name="phone"]').fill('+420 777 111 222');
     await page.locator('input[name="email"]').fill('buyer@example.cz');
@@ -60,21 +60,16 @@ test('Enabled checkout submits validated order to API and exposes failure', { sk
     await page.locator('input[name="street"]').fill('Testovací 12');
     await page.locator('input[name="city"]').fill('Praha');
     await page.locator('input[name="zip"]').fill('11000');
-    await page.locator('input[name="checked"]').check();
     await page.locator('input[name="termsAccepted"]').check();
     await page.locator('input[name="digitalConsent"]').check();
     assert.equal(await page.locator('#summary-total').textContent(), '869 Kč');
-    await page.locator('.submit-desktop').click();
-    await page.locator('#review-dialog[open]').waitFor();
-    assert.equal(await page.locator('#review-total').textContent(), '869 Kč');
-
     let submitted;
     await page.route('**/api/checkout', (route) => {
         submitted = JSON.parse(route.request().postData());
         return route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'PAYMENTS_NOT_READY' }) });
     });
     await page.locator('#start-payment').click();
-    await page.locator('#review-error:visible').waitFor();
+    await page.locator('#checkout-error:visible').waitFor();
     assert.equal(submitted.product, 'full');
     assert.equal(submitted.shipping, 'address');
     assert.equal(submitted.termsAccepted, true);

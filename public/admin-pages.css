@@ -34,3 +34,18 @@
     .receipt-parties { grid-template-columns: 1fr; gap: 20px; }
     body:has(#order-navigation:not([hidden])) .admin-header h1 { font-size: clamp(22px, 6vw, 32px); overflow-wrap: anywhere; }
 }
+
+#resend-confirmation {
+    margin-top: 12px;
+    min-height: 44px;
+    padding: 10px 18px;
+    border: 1px solid var(--violet-dark);
+    border-radius: 10px;
+    background: var(--violet-dark);
+    color: #fff;
+    font: 700 14px/1.4 Arial, sans-serif;
+    cursor: pointer;
+}
+#resend-confirmation:hover:not(:disabled) { background: #594582; }
+#resend-confirmation:focus-visible { outline: 3px solid var(--violet); outline-offset: 3px; }
+#resend-confirmation:disabled { opacity: .65; cursor: wait; }

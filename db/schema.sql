@@ -1,3 +1,8 @@
+CREATE TABLE IF NOT EXISTS order_month_counters (
+        period text PRIMARY KEY,
+        last_number bigint NOT NULL CHECK (last_number > 0)
+    );
+
 CREATE TABLE IF NOT EXISTS orders (
     id uuid PRIMARY KEY,
     order_number text UNIQUE NOT NULL,

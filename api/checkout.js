@@ -78,11 +78,9 @@ export default async function handler(req, res) {
         const delivery = shippingPrice(body.shipping);
         const id = crypto.randomUUID();
         const publicToken = crypto.randomBytes(24).toString('base64url');
-        const orderNumber = `MAM-${new Date().getFullYear()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
         const order = {
             id,
-            orderNumber,
             publicToken,
             lang: body.lang,
             productCode: body.product,
@@ -110,7 +108,8 @@ export default async function handler(req, res) {
             digitalConsent: body.product === 'full',
         };
 
-        await insertOrder(order);
+        const { order_number: orderNumber } = await insertOrder(order);
+        order.orderNumber = orderNumber;
 
         let payment;
         try {

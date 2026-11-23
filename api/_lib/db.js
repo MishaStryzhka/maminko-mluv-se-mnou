@@ -21,6 +21,10 @@ export function ensureSchema() {
 }
 
 export async function initializeOrderSchema(sql) {
+    await sql`CREATE TABLE IF NOT EXISTS order_month_counters (
+        period text PRIMARY KEY,
+        last_number bigint NOT NULL CHECK (last_number > 0)
+    )`;
     await sql`
         CREATE TABLE IF NOT EXISTS orders (
             id uuid PRIMARY KEY,
@@ -109,10 +113,17 @@ export async function initializeOrderSchema(sql) {
               ON stripe_refund_evidence (payment_intent_id, payment_test_mode)`;
 }
 
-export async function insertOrder(order) {
-    await ensureSchema();
-    const sql = getSql();
+export async function insertOrder(order, options = {}) {
+    await (options.ensureSchema || ensureSchema)();
+    const sql = options.sql || getSql();
     const rows = await sql`
+        WITH allocated AS (
+            INSERT INTO order_month_counters (period, last_number)
+            VALUES (to_char(now() AT TIME ZONE 'Europe/Prague', 'YYYY-MM'), 1)
+            ON CONFLICT (period) DO UPDATE SET last_number = order_month_counters.last_number + 1
+            RETURNING 'MAM-' || period || '-' ||
+                lpad(last_number::text, greatest(4, length(last_number::text)), '0') AS number
+        )
         INSERT INTO orders (
             id, order_number, public_token, lang, product_code, product_name,
             product_price, customer_name, customer_email, customer_phone,
@@ -122,7 +133,7 @@ export async function insertOrder(order) {
             address_zip, address_country, total_amount, payment_provider, payment_test_mode,
             terms_accepted_at, digital_consent_at
         ) VALUES (
-            ${order.id}, ${order.orderNumber}, ${order.publicToken}, ${order.lang},
+            ${order.id}, (SELECT number FROM allocated), ${order.publicToken}, ${order.lang},
             ${order.productCode}, ${order.productName}, ${order.productPrice},
             ${order.customerName}, ${order.customerEmail}, ${order.customerPhone},
             ${order.shippingMethod}, ${order.shippingPrice}, ${order.pickupPointId},
@@ -335,7 +346,7 @@ export async function claimPaidConfirmation(orderNumber, claimId, allowTest = fa
                   product_code, product_name, product_price, shipping_method,
                   shipping_price, pickup_point_name, pickup_point_address,
                   pickup_point_zip, address_street, address_city, address_zip,
-                  total_amount, digital_consent_at
+                  total_amount, digital_consent_at, paid_at
     `;
     return rows[0] || null;
 }

@@ -9,9 +9,11 @@
     "test": "node --test"
   },
   "dependencies": {
+    "@ibm/plex-sans": "^2.0.0",
     "@neondatabase/serverless": "^1.0.0",
     "@vercel/functions": "^3.11.2",
     "nodemailer": "^10.5.0",
+    "pdfkit": "^0.21.0",
     "stripe": "^23.1.0"
   },
   "devDependencies": {

@@ -6,6 +6,7 @@ import {
 } from '../api/_lib/confirmation-email.js';
 
 const sample = {
+    paid_at: '2026-11-23T21:00:00Z',
     order_number: 'MAM-2026-ABC123',
     customer_name: 'Jan Novák',
     customer_email: 'buyer@example.com',
@@ -96,8 +97,8 @@ test('Owner test email requires the explicit true flag and the approved sender',
 
 test('Czech confirmation includes paid totals, pickup details, seller, and digital follow-up', () => {
     const result = buildConfirmationEmail(sample);
-    assert.equal(result.subject, `Potvrzení přijetí objednávky ${sample.order_number}`);
-    for (const value of [sample.customer_name, sample.product_name, sample.order_number, '750 Kč', '89 Kč', '839 Kč', sample.pickup_point_name, 'GlamGarb Rentals s.r.o.']) {
+    assert.equal(result.subject, `Platba přijata · Objednávka ${sample.order_number}`);
+    for (const value of [sample.product_name, sample.order_number, '750 Kč', '89 Kč', '839 Kč', sample.pickup_point_name, 'GlamGarb Rentals s.r.o.']) {
         assert.ok(result.text.includes(value));
         assert.ok(result.html.includes(value));
     }
@@ -111,11 +112,11 @@ test('Czech confirmation includes paid totals, pickup details, seller, and digit
 
 test('Ukrainian print-only confirmation uses home delivery and omits digital follow-up', () => {
     const result = buildConfirmationEmail({ ...sample, lang: 'uk', product_code: 'print', shipping_method: 'address' });
-    assert.match(result.subject, /^Підтвердження прийняття замовлення /);
+    assert.match(result.subject, /^Оплату отримано · Замовлення /);
     assert.match(result.text, /Balíkovna на адресу/);
     assert.ok(result.text.includes('Testovací 21, 110 00, Praha, Česká republika'));
     for (const body of [result.text, result.html]) assert.doesNotMatch(body, /Telegram|прямо погодилися/);
-    assert.match(buildConfirmationEmail({ ...sample, lang: 'unknown' }).subject, /^Potvrzení/);
+    assert.match(buildConfirmationEmail({ ...sample, lang: 'unknown' }).subject, /^Platba přijata/);
 });
 
 test('Ukrainian full-package confirmations mirror recorded consent; legacy confirmations never claim missing consent', () => {
@@ -179,6 +180,8 @@ test('SMTP uses TLS, disabled file and URL access, one recipient, and closes aft
     assert.equal(fake.calls.options.auth.pass, 'test-only-not-a-real-password');
     assert.equal(fake.calls.messages.length, 1);
     const message = fake.calls.messages[0];
+    assert.equal(message.attachments[0].filename, 'Faktura-' + sample.order_number + '.pdf');
+    assert.equal(message.attachments[0].content.subarray(0, 5).toString(), '%PDF-');
     assert.deepEqual(message.from, { name: 'Maminko, mluv se mnou', address: SHOP_EMAIL });
     assert.deepEqual(message.to, { address: sample.customer_email });
     assert.deepEqual(message.replyTo, { address: SHOP_EMAIL });

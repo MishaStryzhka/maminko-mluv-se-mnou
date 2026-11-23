@@ -1,5 +1,6 @@
 import { getAdminSession } from './_lib/admin-auth.js';
-import { listOrdersForAdmin } from './_lib/db.js';
+import { randomUUID } from 'node:crypto';
+import { claimPaidConfirmation, releaseConfirmationClaim, markConfirmationSent, listOrdersForAdmin } from './_lib/db.js';
 import { refundPaymentView } from './_lib/stripe-refunds.js';
 
 export function mapOrder(row) {
@@ -60,8 +61,8 @@ export function mapOrder(row) {
 export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
 
-    if (req.method !== 'GET') {
-        res.setHeader('Allow', 'GET');
+    if (!['GET', 'POST'].includes(req.method)) {
+        res.setHeader('Allow', 'GET, POST');
         return res.status(405).json({ error: 'METHOD_NOT_ALLOWED' });
     }
 
@@ -72,6 +73,26 @@ export default async function handler(req, res) {
             return res.status(403).json({ error: 'FORBIDDEN' });
         }
 
+        if (req.method === 'POST') {
+            if (!['admin', 'sales'].includes(user.role)) return res.status(403).json({ error: 'FORBIDDEN' });
+            if (req.headers['x-order-action'] !== 'resend-confirmation') return res.status(400).json({ error: 'INVALID_ACTION' });
+            const { orderNumber, attempts } = req.body || {};
+            if (typeof orderNumber !== 'string' || orderNumber.length > 64 || !Number.isSafeInteger(attempts) || attempts < 0) {
+                return res.status(400).json({ error: 'INVALID_REQUEST' });
+            }
+            const claimId = randomUUID();
+            const order = await claimPaidConfirmation(orderNumber, claimId, false, { expectedAttempts: attempts });
+            if (!order) return res.status(409).json({ error: 'ORDER_NOT_AVAILABLE' });
+            try {
+                const { sendConfirmationEmail } = await import('./_lib/confirmation-email.js');
+                await sendConfirmationEmail(order, { resendId: claimId });
+            } catch {
+                await releaseConfirmationClaim(orderNumber, claimId);
+                return res.status(502).json({ error: 'EMAIL_SEND_FAILED' });
+            }
+            await markConfirmationSent(orderNumber, claimId);
+            return res.status(200).json({ sent: true });
+        }
         if (req.query?.orderNumber !== undefined) {
             const number = req.query.orderNumber;
             if (typeof number !== 'string' || !/^MAM-\d{4}-(?:[A-F0-9]{8}|\d{2}-\d{4,})$/i.test(number)) {

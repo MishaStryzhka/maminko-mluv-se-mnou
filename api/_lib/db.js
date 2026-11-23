@@ -337,8 +337,10 @@ export async function claimPaidConfirmation(orderNumber, claimId, allowTest = fa
                             AND r.payment_test_mode = orders.payment_test_mode)
           AND (NOT payment_test_mode OR (${allowTest === true}
                AND lower(customer_email) = 'info@maminko-mluv-se-mnou.cz'))
+          AND (${options.expectedAttempts ?? null}::int IS NULL OR confirmation_email_attempts = ${options.expectedAttempts ?? null})
           AND (
-            confirmation_email_status IN ('pending', 'failed')
+            (confirmation_email_status = 'sent' AND ${options.expectedAttempts !== undefined})
+            OR confirmation_email_status IN ('pending', 'failed')
             OR (confirmation_email_status = 'sending'
                 AND confirmation_email_claimed_at < now() - interval '10 minutes')
           )
@@ -397,7 +399,7 @@ export async function releaseConfirmationClaim(orderNumber, claimId) {
     const sql = getSql();
     await sql`
         UPDATE orders
-        SET confirmation_email_status = 'failed',
+        SET confirmation_email_status = CASE WHEN confirmation_email_sent_at IS NULL THEN 'failed' ELSE 'sent' END,
             confirmation_email_claim_id = NULL,
             confirmation_email_claimed_at = NULL,
             updated_at = now()

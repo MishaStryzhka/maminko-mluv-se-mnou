@@ -351,6 +351,30 @@ function renderOrderDetail(order) {
     setText('#detail-destination', pickup ? [pickup.name, pickup.address || pickup.zip].filter(Boolean).join('\n') : destination(order));
     const email = order.confirmationEmail || {};
     const emailLabels = { pending: 'ČEKÁ', sending: 'ODESÍLÁ SE', sent: 'PŘIJATO SMTP SERVEREM', failed: 'CHYBA — ČEKÁ NA OPAKOVÁNÍ' };
+    const resend = document.querySelector('#resend-confirmation');
+    if (resend) {
+        resend.hidden = !['admin', 'sales'].includes(state.user?.role) || payment.provider !== 'stripe'
+            || payment.status !== 'paid' || payment.testMode || refund.hold;
+        resend.disabled = false;
+        resend.onclick = async () => {
+            resend.disabled = true;
+            const result = document.querySelector('#resend-result');
+            showMessage(result, 'Odesílání…');
+            try {
+                const response = await fetch('/api/admin-orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Order-Action': 'resend-confirmation' },
+                    body: JSON.stringify({ orderNumber: order.orderNumber, attempts: email.attempts || 0 }),
+                });
+                showMessage(result, response.ok ? 'Potvrzení s fakturou bylo odesláno.'
+                    : response.status === 409 ? 'Stav objednávky se změnil. Zkontrolujte poslední pokus.'
+                    : 'Odeslání se nezdařilo.');
+            } catch {
+                showMessage(result, 'Výsledek odeslání se nepodařilo ověřit.');
+            }
+            await loadOrderDetail(order.orderNumber);
+        };
+    }
     const testSuppressed = order.payment?.testMode && !email.attempts;
     setText('#detail-email', testSuppressed ? 'TEST — E-MAIL NEODESLÁN' : emailLabels[email.status] || '—');
     setText('#detail-email-attempts', `Pokusy: ${email.attempts || 0}${email.sentAt ? ` · ${dateLabel(email.sentAt)}` : ''}`);

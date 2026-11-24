@@ -4,8 +4,7 @@ const stage = viewer.querySelector('.viewer-stage');
 const photo = stage.querySelector('img');
 const previous = viewer.querySelector('[data-prev]');
 const next = viewer.querySelector('[data-next]');
-const smaller = viewer.querySelector('[data-less]');
-const larger = viewer.querySelector('[data-more]');
+const offer = stage.querySelector('.viewer-offer');
 const pointers = new Map();
 let index = 0;
 let zoom = 1;
@@ -21,17 +20,21 @@ function paint() {
     x = clamp(x, Math.max(0, (photo.offsetWidth * zoom - stage.clientWidth) / 2));
     y = clamp(y, Math.max(0, (photo.offsetHeight * zoom - stage.clientHeight) / 2));
     photo.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${zoom})`;
-    smaller.disabled = zoom <= 1;
-    larger.disabled = zoom >= 4;
 }
 
 function show(i) {
+    if (i < 0 || i > samples.length) return;
     index = i;
-    photo.src = samples[i].href;
-    photo.alt = samples[i].querySelector('img').alt;
-    viewer.querySelector('output').textContent = `${i + 1} / ${samples.length}`;
+    const atOffer = i === samples.length;
+    photo.hidden = atOffer;
+    offer.hidden = !atOffer;
+    if (!atOffer) {
+        photo.src = samples[i].href;
+        photo.alt = samples[i].querySelector('img').alt;
+    }
+    viewer.querySelector('output').textContent = `${i + 1} / 60`;
     previous.disabled = i === 0;
-    next.disabled = i === samples.length - 1;
+    next.disabled = atOffer;
     zoom = 1;
     x = y = 0;
     swipeStart = null;
@@ -67,8 +70,10 @@ function changeZoom(value, oldCenter, newCenter = oldCenter) {
     zoom = scale;
     paint();
 }
-smaller.onclick = () => changeZoom(zoom / 1.5);
-larger.onclick = () => changeZoom(zoom * 1.5);
+offer.querySelector('a').onclick = () => viewer.close();
+stage.ondblclick = event => {
+    if (offer.hidden) changeZoom(zoom === 1 ? 2 : 1, { x: event.clientX, y: event.clientY });
+};
 photo.onload = paint;
 window.addEventListener('resize', () => { if (viewer.open) paint(); });
 
@@ -77,7 +82,7 @@ function pinch() {
     return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, distance: Math.hypot(a.x - b.x, a.y - b.y) };
 }
 stage.onpointerdown = event => {
-    if (event.button !== 0 || pointers.size >= 2) return;
+    if (event.target.closest('a') || event.button !== 0 || pointers.size >= 2) return;
     const point = { x: event.clientX, y: event.clientY };
     stage.setPointerCapture(event.pointerId);
     pointers.set(event.pointerId, point);
@@ -88,7 +93,7 @@ stage.onpointermove = event => {
     if (!old) return;
     const before = pointers.size === 2 ? pinch() : null;
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-    if (before && before.distance > 0) {
+    if (offer.hidden && before && before.distance > 0) {
         const after = pinch();
         changeZoom(zoom * after.distance / before.distance, before, after);
     } else if (zoom > 1) {

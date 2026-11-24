@@ -224,11 +224,14 @@
                 <button type="button" data-prev aria-label="Předchozí stránka">‹</button>
                 <output aria-live="polite"></output>
                 <button type="button" data-next aria-label="Další stránka">›</button>
-                <button type="button" data-less aria-label="Zmenšit">−</button>
-                <button type="button" data-more aria-label="Zvětšit">+</button>
                 <button type="button" data-close aria-label="Zavřít" autofocus>×</button>
             </div>
-            <div class="viewer-stage"><img alt="" draggable="false"></div>
+            <div class="viewer-stage"><img alt="" draggable="false">
+                <div class="viewer-offer" hidden>
+                    <strong>Celá publikace má 60 stran</strong>
+                    <a class="btn primary" href="#products">Vybrat variantu</a>
+                </div>
+            </div>
         </dialog>
         <script src="/sample-viewer.js" type="module"></script>
         <script src="/app.js"></script>

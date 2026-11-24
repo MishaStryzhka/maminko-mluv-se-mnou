@@ -91,7 +91,7 @@ const PRODUCTS = {
 };
 
 const state = {
-    lang: localStorage.getItem('maminko-lang') === 'cs' ? 'cs' : 'uk',
+    lang: localStorage.getItem('maminko-lang') === 'uk' ? 'uk' : 'cs',
     product: 'full',
     shipping: 'pickup',
     pickup: null,
@@ -131,6 +131,9 @@ function formatZip(value) {
 function applyLanguage() {
     document.documentElement.lang = state.lang;
     localStorage.setItem('maminko-lang', state.lang);
+    document.querySelectorAll('a[data-storefront]').forEach((link) => {
+        link.pathname = state.lang === 'uk' ? '/uk' : '/';
+    });
     document.querySelectorAll('[data-i18n]').forEach((el) => {
         el.textContent = t(el.dataset.i18n);
     });

@@ -65,7 +65,21 @@
     .hero .actions { margin-inline: auto; }
     .hero .lead { margin-top: 12px; }
 }
-#sale-banner:not([hidden]) { display: block; padding: 9px 16px; text-align: center; background: var(--d); color: white; font-weight: 700; }
+#sale-banner:not([hidden]) { display: block; padding: 6px 16px; text-align: center; background: #000; color: #fff; font-weight: 700; }
 .sale-price { color: var(--d); font-weight: 700; }
 .sale-price strong { font-size: 1.65em; }
 .sale-price del, [data-sale-price] del { color: #746a7c; font-size: .85em; font-weight: 400; }
+
+.hero .actions { align-items: center; column-gap: 20px; }
+.hero .sample-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    color: var(--d);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: .18em;
+}
+.hero .sample-link:hover { text-decoration-thickness: 2px; }
+.hero .sample-link:focus-visible { outline: 2px solid var(--d); outline-offset: 3px; }

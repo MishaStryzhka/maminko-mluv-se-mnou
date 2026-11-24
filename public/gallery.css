@@ -34,3 +34,34 @@
 }
 .sample-offer strong { font-size: clamp(15px, 1.5vw, 20px); }
 .sample-offer .btn { max-width: 100%; padding: 12px; white-space: normal; }
+
+.lang a {
+    padding: 7px 10px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 900;
+}
+.hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, .85fr);
+    align-items: center;
+    gap: clamp(24px, 5vw, 80px);
+    text-align: left;
+}
+.hero h1 { font-size: clamp(36px, 5.5vw, 80px); line-height: 1.02; text-transform: none; }
+.hero .lead, .hero .rule { margin-inline: 0; }
+.hero .actions { justify-content: flex-start; }
+.hero-photo { width: min(100%, 440px); margin: 0 auto; }
+#samples { scroll-margin-top: 55px; }
+#samples .gallery { max-width: none; }
+@media (max-width: 720px) {
+    .hero { grid-template-columns: 1fr; text-align: center; gap: 20px; padding-top: 24px; }
+    .hero .rule { display: none; }
+    .hero .actions { justify-content: center; }
+    .hero-photo { width: min(72%, 290px); }
+}
+.hero .actions { margin: 22px 0 0; padding: 0; }
+@media (max-width: 720px) {
+    .hero .actions { margin-inline: auto; }
+    .hero .lead { margin-top: 12px; }
+}

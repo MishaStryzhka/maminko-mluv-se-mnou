@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://maminko-mluv-se-mnou.cz/sitemap.xml

@@ -219,6 +219,18 @@
 <div>CZ / UA · навчальне видання для родин</div>
 <a href="/kontakt.html">Контакти</a> · <a href="/obchodni-podminky.html">Умови продажу</a> · <a href="/ochrana-osobnich-udaju.html">Захист персональних даних</a>
 </div></footer>
+        <dialog id="sample-viewer" aria-label="Зразки книжки">
+            <div class="viewer-controls">
+                <button type="button" data-prev aria-label="Попередня сторінка">‹</button>
+                <output aria-live="polite"></output>
+                <button type="button" data-next aria-label="Наступна сторінка">›</button>
+                <button type="button" data-less aria-label="Зменшити">−</button>
+                <button type="button" data-more aria-label="Збільшити">+</button>
+                <button type="button" data-close aria-label="Закрити" autofocus>×</button>
+            </div>
+            <div class="viewer-stage"><img alt="" draggable="false"></div>
+        </dialog>
+        <script src="/sample-viewer.js" type="module"></script>
         <script src="/app.js"></script>
         
     </body>

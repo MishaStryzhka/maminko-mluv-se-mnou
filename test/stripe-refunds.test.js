@@ -649,3 +649,23 @@ test('Admin cleanup respects age, preserves paid orders and reveals late payment
     assert.equal(await removeOrderFromAdmin(f.other.orderNumber, f.options), true);
     assert.equal((await listOrdersForAdmin(100, f.options)).length, 1);
 });
+
+test('Manual dispatch keeps the first tracking number and cannot dispatch held, unpaid or test orders', async t => {
+    const f = await fixture(t);
+    const { markOrderShipped } = await import('../api/_lib/db.js');
+    const ship = tracking => markOrderShipped(f.order.orderNumber, tracking, f.options);
+    await f.sql`UPDATE orders SET stripe_refund_hold = true`;
+    assert.equal(await ship('TEST123'), false);
+    await f.sql`UPDATE orders SET stripe_refund_hold = false, payment_test_mode = true`;
+    assert.equal(await ship('TEST123'), false);
+    await f.sql`UPDATE orders SET payment_test_mode = false, payment_status = 'pending'`;
+    assert.equal(await ship('TEST123'), false);
+    await f.sql`UPDATE orders SET payment_status = 'paid'`;
+    assert.equal(await ship('TEST123'), true);
+    assert.equal(await ship('TEST123'), true);
+    assert.equal(await ship('OTHER456'), false);
+    const [row] = await listOrdersForAdmin(1, { ...f.options, orderNumber: f.order.orderNumber });
+    assert.equal(row.shipping_status, 'sent');
+    assert.equal(row.tracking_number, 'TEST123');
+    assert.ok(row.shipped_at);
+});

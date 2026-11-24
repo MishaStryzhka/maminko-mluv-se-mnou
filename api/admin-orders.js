@@ -1,6 +1,6 @@
 import { getAdminSession } from './_lib/admin-auth.js';
 import { randomUUID } from 'node:crypto';
-import { claimPaidConfirmation, releaseConfirmationClaim, markConfirmationSent, removeOrderFromAdmin, listOrdersForAdmin } from './_lib/db.js';
+import { claimPaidConfirmation, releaseConfirmationClaim, markConfirmationSent, markOrderShipped, removeOrderFromAdmin, listOrdersForAdmin } from './_lib/db.js';
 import { refundPaymentView } from './_lib/stripe-refunds.js';
 
 export function mapOrder(row) {
@@ -22,6 +22,8 @@ export function mapOrder(row) {
         },
         shipping: {
             method: row.shipping_method,
+            trackingNumber: row.tracking_number,
+            shippedAt: row.shipped_at,
             price: row.shipping_price,
             status: payment.refund.hold && row.shipping_status === 'ready' ? 'not_ready' : row.shipping_status,
             pickup: row.shipping_method === 'pickup' ? {
@@ -82,6 +84,15 @@ export default async function handler(req, res) {
                 return removed ? res.status(200).json({ removed }) : res.status(409).json({ error: 'ORDER_NOT_REMOVABLE' });
             }
             if (!['admin', 'sales'].includes(user.role)) return res.status(403).json({ error: 'FORBIDDEN' });
+            if (req.headers['x-order-action'] === 'mark-shipped') {
+                const { orderNumber, trackingNumber } = req.body || {};
+                if (typeof orderNumber !== 'string' || !orderNumber || orderNumber.length > 64 ||
+                    typeof trackingNumber !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9-]{0,63}$/.test(trackingNumber.trim())) {
+                    return res.status(400).json({ error: 'INVALID_TRACKING' });
+                }
+                const shipped = await markOrderShipped(orderNumber, trackingNumber.trim());
+                return shipped ? res.status(200).json({ shipped }) : res.status(409).json({ error: 'ORDER_NOT_READY' });
+            }
             if (req.headers['x-order-action'] !== 'resend-confirmation') return res.status(400).json({ error: 'INVALID_ACTION' });
             const { orderNumber, attempts } = req.body || {};
             if (typeof orderNumber !== 'string' || orderNumber.length > 64 || !Number.isSafeInteger(attempts) || attempts < 0) {

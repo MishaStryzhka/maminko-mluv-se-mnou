@@ -435,6 +435,47 @@ function renderOrderDetail(order) {
     detail.classList.add('open');
 }
 
+function trackingCell(order) {
+    if (!readyToShip(order)) return cell(order.shipping?.trackingNumber, order.shipping?.shippedAt ? dateLabel(order.shipping.shippedAt) : '');
+    const td = document.createElement('td');
+    const form = document.createElement('form');
+    form.className = 'dispatch-form';
+    const label = document.createElement('label');
+    label.textContent = 'Podací číslo';
+    const input = document.createElement('input');
+    input.required = true;
+    input.maxLength = 64;
+    input.pattern = '[A-Za-z0-9][A-Za-z0-9\\-]{0,63}';
+    label.appendChild(input);
+    const button = document.createElement('button');
+    button.type = 'submit';
+    button.className = 'detail-button';
+    button.textContent = 'Označit jako odeslané';
+    form.append(label, button);
+    form.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (button.disabled) return;
+        button.disabled = true;
+        const result = document.querySelector('#shipping-result');
+        try {
+            const response = await fetch('/api/admin-orders', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Order-Action': 'mark-shipped' },
+                body: JSON.stringify({ orderNumber: order.orderNumber, trackingNumber: input.value.trim() }),
+            });
+            if (!response.ok && response.status !== 409) throw new Error();
+            showMessage(result, response.ok ? 'Zásilka ' + order.orderNumber + ' byla označena jako odeslaná.'
+                : 'Stav objednávky se změnil. Zkontrolujte zásilku v přehledu.');
+            await loadOrders(renderShippingPage);
+        } catch {
+            showMessage(result, 'Odeslání se nepodařilo ověřit. Obnovte přehled a zkontrolujte stav zásilky.');
+        } finally {
+            button.disabled = false;
+        }
+    });
+    td.appendChild(form);
+    return td;
+}
+
 function renderShippingPage() {
     const ready = state.orders.filter(readyToShip).length;
     const sent = state.orders.filter((order) => order.shipping?.status === 'sent').length;
@@ -459,6 +500,7 @@ function renderShippingPage() {
         const paymentTd = document.createElement('td');
         appendPaymentStatus(paymentTd, order);
         tr.appendChild(paymentTd);
+        tr.appendChild(trackingCell(order));
         body.appendChild(tr);
     });
 }

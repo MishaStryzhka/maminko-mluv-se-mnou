@@ -1,7 +1,7 @@
 import { stripeCheckoutReady, stripeConfiguration } from './_lib/stripe.js';
 
 import { getAdminSession } from './_lib/admin-auth.js';
-import { productPrices, readPromotion, savePromotion } from './_lib/promotion.js';
+import { productPrices, readPromotion, regularPrices, savePromotion } from './_lib/promotion.js';
 
 const DEFAULT_SHIPPING = {
     pickup: 89,
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     const stripe = stripeConfiguration();
     const promotion = await readPromotion();
     return res.status(200).json({
-        promotion, prices: productPrices(promotion),
+        promotion, regularPrices, prices: productPrices(promotion),
         shipping: { pickup, address },
         databaseReady: Boolean(process.env.DATABASE_URL),
         stripeEnabled: stripeCheckoutReady(),

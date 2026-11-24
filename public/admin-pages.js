@@ -3,6 +3,7 @@ const page = document.body.dataset.adminPage || 'orders';
 const state = {
     user: null,
     orders: [],
+    shippingFilter: 'ready',
     users: [],
     invites: [],
     filter: 'all',
@@ -82,7 +83,7 @@ function refundAmounts(order) {
 
 function shippingLabel(status) {
     return {
-        ready: 'READY', not_ready: 'ČEKÁ', sent: 'ODESLÁNO', delivered: 'DORUČENO', cancelled: 'ZRUŠENO',
+        ready: 'K ODESLÁNÍ', not_ready: 'ČEKÁ', sent: 'ODESLÁNO', delivered: 'DORUČENO', cancelled: 'ZRUŠENO',
         refund_hold: 'POZASTAVENO · VRATKA',
     }[status] || String(status || '—').toUpperCase();
 }
@@ -472,9 +473,21 @@ function trackingCell(order) {
             button.disabled = false;
         }
     });
-    td.appendChild(form);
+    const disclosure = document.createElement('details');
+    disclosure.className = 'dispatch-entry';
+    const summary = document.createElement('summary');
+    summary.textContent = 'Zadat podací číslo';
+    disclosure.append(summary, form);
+    td.appendChild(disclosure);
     return td;
 }
+
+const shippingFilters = document.querySelectorAll('[data-shipping-filter]');
+shippingFilters.forEach(button => button.addEventListener('click', () => {
+    state.shippingFilter = button.dataset.shippingFilter;
+    shippingFilters.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+    renderShippingPage();
+}));
 
 function renderShippingPage() {
     const ready = state.orders.filter(readyToShip).length;
@@ -488,8 +501,12 @@ function renderShippingPage() {
     const empty = document.querySelector('#shipping-empty');
     if (!body) return;
     body.replaceChildren();
-    if (empty) empty.hidden = state.orders.length > 0;
-    state.orders.forEach((order) => {
+    const orders = state.orders.filter(order => state.shippingFilter === 'ready'
+        ? readyToShip(order) : order.shipping?.status === state.shippingFilter);
+    const hint = document.querySelector('#dispatch-hint');
+    if (hint) hint.hidden = state.shippingFilter !== 'ready';
+    if (empty) empty.hidden = orders.length > 0;
+    orders.forEach((order) => {
         const tr = document.createElement('tr');
         tr.appendChild(cell(order.orderNumber, dateLabel(order.createdAt)));
         tr.appendChild(cell(order.customer?.name, order.customer?.phone));

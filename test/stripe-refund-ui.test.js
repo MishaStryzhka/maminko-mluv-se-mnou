@@ -189,19 +189,26 @@ test('Admin refund detail shows confirmed/pending amounts, failure counts and ex
     assert.equal(nodes['#detail-refund-hold'].hidden, true);
 });
 
-test('Shipping rows carry TEST payment markers and held refunds never show a ready-to-ship badge', () => {
+test('Shipping opens on ready orders and retains refund warnings in sent shipments', () => {
     const { api, nodes } = adminUi();
     api.state.orders = [
-        adminOrder({ payment: { testMode: true, status: 'refunded', refund: { status: 'full', refundedAmount: 100.01, hold: true } } }),
+        adminOrder(),
+        adminOrder({ payment: { testMode: true } }),
+        adminOrder({ payment: { refund: { hold: true } } }),
         adminOrder({ shipping: { status: 'sent' }, payment: { status: 'refund_review', refund: { status: 'review', hold: true } } }),
     ];
     api.renderShippingPage();
-    const rows = nodes['#shipping-body'].children;
-    assert.match(rows[0].children[4].textContent, /^TEST · VRÁCENO/);
-    assert.match(rows[0].children[3].textContent, /POZASTAVENO · VRATKA/);
-    assert.doesNotMatch(rows[0].children[3].textContent, /READY/);
-    assert.match(rows[1].children[3].textContent, /ODESLÁNO.*již odeslanou zásilku prověřit/);
-    assert.equal(nodes['#ship-ready'].textContent, '0');
+    const body = nodes['#shipping-body'];
+    assert.equal(body.children.length, 1);
+    assert.match(body.children[0].children[5].textContent, /Zadat podací číslo/);
+    assert.equal(nodes['#ship-ready'].textContent, '1');
+    api.state.shippingFilter = 'sent';
+    api.renderShippingPage();
+    assert.equal(body.children.length, 1);
+    assert.match(body.children[0].children[3].textContent, /ODESLÁNO.*již odeslanou zásilku prověřit/);
+    api.state.shippingFilter = 'delivered';
+    api.renderShippingPage();
+    assert.equal(nodes['#shipping-empty'].hidden, false);
 });
 
 test('Admin shows evidence of digital consent only for the full package', () => {

@@ -56,3 +56,9 @@
 .dispatch-form label { display: grid; gap: 4px; }
 .dispatch-form input { min-width: 0; width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px; font: inherit; }
 .dispatch-form button { color: white; background: var(--violet-dark); min-height: 36px; }
+
+.shipping-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.shipping-filters button { display: grid; gap: 4px; padding: 16px; text-align: left; border: 1px solid var(--line); border-radius: 16px; background: #fff; cursor: pointer; }
+.shipping-filters button[aria-pressed="true"] { border-color: var(--violet-dark); background: #f4eff9; }
+.dispatch-entry summary { width: fit-content; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; color: var(--violet-dark); font-size: 13px; font-weight: 700; cursor: pointer; }
+.dispatch-entry[open] .dispatch-form { margin-top: 10px; }

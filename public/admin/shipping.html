@@ -33,17 +33,16 @@
             <p id="auth-message" class="admin-message" hidden></p>
         </section>
         <div id="admin-content" hidden>
-            <section class="stats">
-                <article><span>K odeslání</span><strong id="ship-ready">0</strong><small>READY</small></article>
-                <article><span>Odesláno</span><strong id="ship-sent">0</strong><small>SENT</small></article>
-                <article><span>Doručeno</span><strong id="ship-delivered">0</strong><small>DELIVERED</small></article>
-                <article><span>Balíkovna API</span><strong>—</strong><small>další krok</small></article>
+            <section class="stats shipping-filters" aria-label="Stav zásilky">
+                <button type="button" data-shipping-filter="ready" aria-pressed="true"><span>K odeslání</span><strong id="ship-ready">0</strong></button>
+                <button type="button" data-shipping-filter="sent" aria-pressed="false"><span>Odesláno</span><strong id="ship-sent">0</strong></button>
+                <button type="button" data-shipping-filter="delivered" aria-pressed="false"><span>Doručeno</span><strong id="ship-delivered">0</strong></button>
             </section>
             <section class="page-card">
-                <div class="section-head"><div><h2>Přehled zásilek</h2><p>Po předání zásilky Balíkovně zadejte podací číslo a označte ji jako odeslanou.</p></div></div>
+                <div class="section-head"><div><h2>Přehled zásilek</h2><p id="dispatch-hint">Po předání zásilky Balíkovně zadejte podací číslo a označte ji jako odeslanou.</p></div></div>
                 <div class="table-wrap"><table class="shipping-table"><thead><tr><th>Objednávka</th><th>Zákazník</th><th>Doručení</th><th>Stav zásilky</th><th>Platba</th><th>Podací číslo</th></tr></thead><tbody id="shipping-body"></tbody></table></div>
                 <p id="shipping-result" role="status" hidden></p>
-                <p id="shipping-empty" class="empty-state" hidden>Zatím nejsou žádné objednávky.</p>
+                <p id="shipping-empty" class="empty-state" hidden>V této skupině nejsou žádné zásilky.</p>
             </section>
         </div>
     </main>

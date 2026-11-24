@@ -3,9 +3,11 @@ import { insertOrder, attachStripeSession } from './_lib/db.js';
 import { createStripeSession, stripeCheckoutReady, stripeConfiguration } from './_lib/stripe.js';
 import { validRecipient } from './_lib/confirmation-email.js';
 
+import { productPrices, readPromotion, regularPrices } from './_lib/promotion.js';
+
 const PRODUCTS = {
-    full: { name: 'Kompletní balíček', price: 750 },
-    print: { name: 'Tištěná publikace', price: 490 },
+    full: { name: 'Kompletní balíček' },
+    print: { name: 'Tištěná publikace' },
 };
 
 const DEFAULT_SHIPPING = {
@@ -37,7 +39,7 @@ function shippingPrice(method) {
 }
 
 function validate(body) {
-    if (!PRODUCTS[body.product]) return 'INVALID_PRODUCT';
+    if (!Object.hasOwn(PRODUCTS, body.product)) return 'INVALID_PRODUCT';
     if (!['cs', 'uk'].includes(body.lang)) return 'INVALID_LANGUAGE';
     if (!['pickup', 'address'].includes(body.shipping)) return 'INVALID_SHIPPING';
     if (!clean(body.customer?.name, 120)) return 'NAME_REQUIRED';
@@ -75,6 +77,10 @@ export default async function handler(req, res) {
 
     try {
         const product = PRODUCTS[body.product];
+        const amount = productPrices(await readPromotion())[body.product];
+        if (amount !== (body.expectedProductPrice ?? regularPrices[body.product])) {
+            return res.status(409).json({ error: 'PRICE_CHANGED' });
+        }
         const delivery = shippingPrice(body.shipping);
         const id = crypto.randomUUID();
         const publicToken = crypto.randomBytes(24).toString('base64url');
@@ -85,7 +91,7 @@ export default async function handler(req, res) {
             lang: body.lang,
             productCode: body.product,
             productName: product.name,
-            productPrice: product.price,
+            productPrice: amount,
             customerName: clean(body.customer.name, 120),
             customerEmail: body.customer.email.trim().toLowerCase(),
             customerPhone: clean(body.customer.phone, 50),
@@ -102,7 +108,7 @@ export default async function handler(req, res) {
             addressCity: body.shipping === 'address' ? clean(body.address?.city, 120) : null,
             addressZip: body.shipping === 'address' ? clean(body.address?.zip, 20) : null,
             addressCountry: body.shipping === 'address' ? 'CZ' : null,
-            totalAmount: product.price + delivery,
+            totalAmount: amount + delivery,
             paymentProvider: 'stripe',
             paymentTestMode: stripeConfiguration().test,
             digitalConsent: body.product === 'full',
@@ -127,7 +133,7 @@ export default async function handler(req, res) {
         return res.status(201).json({
             orderNumber,
             publicToken,
-            productPrice: product.price,
+            productPrice: amount,
             shippingPrice: delivery,
             totalAmount: order.totalAmount,
             payment: {

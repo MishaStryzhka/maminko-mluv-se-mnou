@@ -273,6 +273,7 @@ async function startPayment() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 product: order.product,
+                expectedProductPrice: PRODUCTS[order.product].price,
                 lang: order.lang,
                 shipping: order.shipping,
                 customer: order.customer,
@@ -289,6 +290,10 @@ async function startPayment() {
         location.assign(result.payment.gatewayUrl);
     } catch (error) {
         errorBox.textContent = t(error.message === 'PAYMENTS_NOT_READY' ? 'paymentUnavailable' : 'paymentError');
+        if (error.message === 'PRICE_CHANGED') {
+            await loadCheckoutConfiguration();
+            errorBox.textContent = state.lang === 'cs' ? 'Cena se změnila. Zkontrolujte součet a potvrďte objednávku.' : 'Ціна змінилася. Перевірте підсумок і підтвердьте замовлення.';
+        }
         errorBox.hidden = false;
         paymentPending = false;
         refreshPaymentAvailability();
@@ -359,10 +364,15 @@ async function loadCheckoutConfiguration() {
         if (!response.ok) throw new Error('CONFIG_FAILED');
         const config = await response.json();
         if (!Number.isInteger(config.shipping?.pickup) || !Number.isInteger(config.shipping?.address)) throw new Error('CONFIG_INVALID');
+        for (const [code, amount] of Object.entries(config.prices || {})) {
+            PRODUCTS[code].price = amount;
+            document.querySelector('[data-product-price="' + code + '"]').textContent = price(amount);
+        }
         state.shippingPrices = config.shipping;
         state.checkoutEnabled = config.stripeEnabled === true;
         state.sandbox = config.sandbox === true;
     } catch (error) {
+        state.checkoutEnabled = false;
         console.warn('Could not load checkout configuration', error?.message);
     }
     renderSummary();

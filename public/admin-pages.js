@@ -609,12 +609,34 @@ function showInvite(invite) {
     result.hidden = false;
 }
 
+const promotionForm = document.querySelector('#promotion-form');
+promotionForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const fields = document.querySelector('#promotion-fields');
+    const active = promotionForm.elements.active.checked;
+    const percent = Number(promotionForm.elements.percent.value);
+    fields.disabled = true;
+    try {
+        const response = await fetch('/api/checkout-config', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ active, percent }),
+        });
+        if (!response.ok) throw new Error();
+        setText('#promotion-status', active ? 'Akce je aktivní. Sleva ' + percent + ' %.' : 'Akce je vypnutá.');
+    } catch {
+        setText('#promotion-status', 'Uložení se nezdařilo. Zkuste to znovu.');
+    } finally { fields.disabled = false; }
+});
+
 async function loadSettings() {
     const status = document.querySelector('#settings-status');
     try {
         const response = await fetch('/api/checkout-config', { cache: 'no-store' });
         const data = await readJson(response);
         if (!response.ok) throw new Error();
+        promotionForm.elements.active.checked = data.promotion.active;
+        promotionForm.elements.percent.value = data.promotion.percent;
+        document.querySelector('#promotion-fields').disabled = false;
         setText('#setting-db', data.databaseReady ? 'Připojeno' : 'Chybí DATABASE_URL');
         setText('#setting-stripe', data.stripeEnabled ? (data.sandbox ? 'Testovací režim připraven' : 'Produkční režim připraven') : 'Není aktivní');
         setText('#setting-pickup', data.shipping?.pickup == null ? '—' : price(data.shipping.pickup));

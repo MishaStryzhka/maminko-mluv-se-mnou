@@ -76,6 +76,7 @@ export async function initializeOrderSchema(sql) {
         )
     `;
     await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS admin_removed_at timestamptz`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_number text, ADD COLUMN IF NOT EXISTS shipped_at timestamptz`;
     // Existing GoPay-era databases need additive migrations as well.
     await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS stripe_session_id text`;
     await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_test_mode boolean NOT NULL DEFAULT false`;
@@ -456,13 +457,33 @@ export async function updatePaymentState(paymentId, gopayState, paymentStatus) {
         UPDATE orders
         SET gopay_state = ${gopayState},
             payment_status = ${paymentStatus},
-            shipping_status = CASE WHEN ${paid} THEN 'ready' ELSE shipping_status END,
+            shipping_status = CASE WHEN ${paid} AND shipping_status = 'not_ready' THEN 'ready' ELSE shipping_status END,
             paid_at = CASE WHEN ${paid} AND paid_at IS NULL THEN now() ELSE paid_at END,
             updated_at = now()
         WHERE gopay_payment_id = ${String(paymentId)}
         RETURNING *
     `;
     return rows[0] || null;
+}
+
+export async function markOrderShipped(orderNumber, trackingNumber, options = {}) {
+    await (options.ensureSchema || ensureSchema)();
+    const sql = options.sql || getSql();
+    const rows = await sql`
+        UPDATE orders SET shipping_status = 'sent', tracking_number = ${trackingNumber},
+                          shipped_at = now(), updated_at = now()
+        WHERE order_number = ${orderNumber} AND shipping_status = 'ready'
+          AND payment_status = 'paid' AND NOT payment_test_mode
+          AND NOT stripe_refund_hold AND stripe_refunds = '{}'::jsonb
+          AND NOT EXISTS (SELECT 1 FROM stripe_refund_evidence r
+                          WHERE r.payment_intent_id = orders.stripe_payment_intent_id
+                            AND r.payment_test_mode = orders.payment_test_mode)
+        RETURNING order_number
+    `;
+    if (rows.length) return true;
+    const existing = await sql`SELECT order_number FROM orders WHERE order_number = ${orderNumber}
+        AND shipping_status IN ('sent', 'delivered') AND tracking_number = ${trackingNumber}`;
+    return existing.length > 0;
 }
 
 export async function removeOrderFromAdmin(orderNumber, options = {}) {
@@ -489,7 +510,7 @@ export async function listOrdersForAdmin(limit = 100, options = {}) {
     const sql = options.sql || getSql();
     const safeLimit = Math.max(1, Math.min(Number(limit) || 100, 200));
     return sql`
-        SELECT order_number, created_at, updated_at, lang, product_code, product_name,
+        SELECT order_number, tracking_number, shipped_at, created_at, updated_at, lang, product_code, product_name,
                product_price, currency, customer_name, customer_email, customer_phone,
                shipping_method, shipping_price, shipping_status,
                pickup_point_id, pickup_point_name, pickup_point_zip, pickup_point_address,

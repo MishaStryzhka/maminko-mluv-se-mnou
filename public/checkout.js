@@ -96,6 +96,7 @@ const state = {
     shipping: 'pickup',
     pickup: null,
     shippingPrices: null,
+    promotion: null,
     checkoutEnabled: false,
     sandbox: false,
 };
@@ -169,6 +170,13 @@ function renderPickup() {
 function renderSummary() {
     const product = PRODUCTS[state.product];
     const deliveryPrice = state.shippingPrices?.[state.shipping];
+    const saving = document.querySelector('#summary-saving');
+    saving.hidden = !state.promotion;
+    if (state.promotion) {
+        const difference = state.promotion.regularPrices[state.product] - product.price;
+        const label = state.lang === 'cs' ? 'Ušetříte' : 'Ваша економія';
+        saving.textContent = `Black Friday · ${label} ${price(difference)}`;
+    }
     document.querySelector('#summary-product-name').textContent = t(product.nameKey);
     document.querySelector('#summary-product-desc').textContent = t(product.descKey);
     document.querySelector('#summary-product-price').textContent = price(product.price);
@@ -364,8 +372,16 @@ async function loadCheckoutConfiguration() {
         if (!response.ok) throw new Error('CONFIG_FAILED');
         const config = await response.json();
         if (!Number.isInteger(config.shipping?.pickup) || !Number.isInteger(config.shipping?.address)) throw new Error('CONFIG_INVALID');
+        state.promotion = config.promotion?.active && config.regularPrices
+            ? { percent: config.promotion.percent, regularPrices: config.regularPrices } : null;
+        const badge = document.querySelector('#checkout-sale-badge');
+        badge.hidden = !state.promotion;
+        if (state.promotion) badge.textContent = `Black Friday −${state.promotion.percent} %`;
         for (const [code, amount] of Object.entries(config.prices || {})) {
             PRODUCTS[code].price = amount;
+            const previous = document.querySelector('[data-regular-price="' + code + '"]');
+            previous.hidden = !state.promotion;
+            if (state.promotion) previous.textContent = price(state.promotion.regularPrices[code]);
             document.querySelector('[data-product-price="' + code + '"]').textContent = price(amount);
         }
         state.shippingPrices = config.shipping;

@@ -27,3 +27,17 @@
 @media (prefers-reduced-motion: reduce) {
     #start-payment[aria-busy="true"]::after { animation: none; }
 }
+
+#checkout-sale-badge:not([hidden]) {
+    display: inline-block;
+    margin: 0 0 12px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    background: var(--violet-soft);
+    color: var(--violet-dark);
+    font-size: 13px;
+    font-weight: 700;
+}
+.variant-price { margin-top: auto; display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; }
+.variant-price del { font-size: 13px; color: var(--muted); }
+#summary-saving { margin: 12px 0 0; color: var(--violet-dark); font-size: 14px; font-weight: 700; }

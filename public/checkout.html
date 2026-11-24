@@ -27,13 +27,14 @@
                         <div class="step-number">1</div>
                         <div class="step-content">
                             <h2 id="product-title" data-i18n="productTitle">Vyberte variantu</h2>
+                            <span id="checkout-sale-badge" hidden></span>
                             <div class="choice-grid product-grid">
                                 <label class="choice-card product-choice" data-product-card="full">
                                     <input type="radio" name="product" value="full" />
                                     <span class="choice-body">
                                         <span class="choice-title" data-i18n="fullName">Kompletní balíček</span>
                                         <span class="choice-copy" data-i18n="fullDesc">Tištěná publikace + digitální materiály v Telegram kanálu</span>
-                                        <strong data-product-price="full">750 Kč</strong>
+                                        <span class="variant-price"><del data-regular-price="full" hidden></del> <strong data-product-price="full">750 Kč</strong></span>
                                     </span>
                                 </label>
                                 <label class="choice-card product-choice" data-product-card="print">
@@ -41,7 +42,7 @@
                                     <span class="choice-body">
                                         <span class="choice-title" data-i18n="printName">Tištěná publikace</span>
                                         <span class="choice-copy" data-i18n="printDesc">Tištěná publikace A4, 60 praktických stran</span>
-                                        <strong data-product-price="print">490 Kč</strong>
+                                        <span class="variant-price"><del data-regular-price="print" hidden></del> <strong data-product-price="print">490 Kč</strong></span>
                                     </span>
                                 </label>
                             </div>
@@ -148,6 +149,7 @@
                         </div>
                         <strong id="summary-product-price"></strong>
                     </div>
+                    <p id="summary-saving" hidden></p>
                     <div class="summary-lines">
                         <div><span data-i18n="delivery">Doprava</span><strong id="summary-shipping"></strong></div>
                         <div id="summary-point-row" hidden><span data-i18n="pickup">Výdejní místo</span><strong id="summary-point"></strong></div>

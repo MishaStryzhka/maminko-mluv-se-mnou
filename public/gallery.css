@@ -139,7 +139,18 @@ html:has(#sample-viewer[open]) { overflow: hidden; }
 
 .viewer-stage { margin-block: max(58px, env(safe-area-inset-top)) max(48px, env(safe-area-inset-bottom)); }
 .viewer-offer:not([hidden]) {
+    position: relative; isolation: isolate; overflow: hidden;
     height: 100%; display: flex; flex-direction: column; align-items: center;
     justify-content: center; gap: 20px; padding-inline: 56px; text-align: center;
 }
 .viewer-offer strong { font-size: clamp(24px, 5vw, 48px); }
+
+.viewer-offer::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: url("/assets/images/gallery/page-04.jpg") center / contain no-repeat;
+    filter: blur(5px) brightness(.42);
+}

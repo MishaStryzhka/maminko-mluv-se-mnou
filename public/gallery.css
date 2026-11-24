@@ -65,3 +65,7 @@
     .hero .actions { margin-inline: auto; }
     .hero .lead { margin-top: 12px; }
 }
+#sale-banner:not([hidden]) { display: block; padding: 9px 16px; text-align: center; background: var(--d); color: white; font-weight: 700; }
+.sale-price { color: var(--d); font-weight: 700; }
+.sale-price strong { font-size: 1.65em; }
+.sale-price del, [data-sale-price] del { color: #746a7c; font-size: .85em; font-weight: 400; }

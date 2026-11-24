@@ -34,6 +34,18 @@
         </section>
         <div id="admin-content" hidden>
             <section class="page-card">
+                <h2>Black Friday</h2>
+                <form id="promotion-form">
+                    <fieldset id="promotion-fields" disabled>
+                        <label><input type="checkbox" name="active"> Aktivovat akci</label>
+                        <label>Sleva (%) <input type="number" name="percent" min="1" max="99" step="1" required></label>
+                        <button class="primary-action" type="submit">Uložit akci</button>
+                    </fieldset>
+                    <p>Sleva platí pro obě varianty knihy. Doprava se účtuje v plné výši.</p>
+                    <p role="status" id="promotion-status"></p>
+                </form>
+            </section>
+            <section class="page-card">
                 <div class="section-head"><div><h2>Stav systému</h2><p>Kontrola základního nastavení checkoutu. Citlivé hodnoty se zde nezobrazují.</p></div></div>
                 <div class="settings-list">
                     <div class="settings-row"><span>Neon databáze</span><strong id="setting-db">Načítám…</strong></div>

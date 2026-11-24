@@ -62,3 +62,7 @@
 .shipping-filters button[aria-pressed="true"] { border-color: var(--violet-dark); background: #f4eff9; }
 .dispatch-entry summary { width: fit-content; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; color: var(--violet-dark); font-size: 13px; font-weight: 700; cursor: pointer; }
 .dispatch-entry[open] .dispatch-form { margin-top: 10px; }
+#promotion-fields { display: flex; align-items: center; flex-wrap: wrap; gap: 18px; margin: 18px 0; padding: 0; border: 0; }
+#promotion-fields label { display: inline-flex; align-items: center; gap: 8px; }
+#promotion-fields input[type=number] { width: 5em; padding: 8px; border: 1px solid #ddd2e5; border-radius: 8px; }
+#promotion-form input { accent-color: #6f589c; }

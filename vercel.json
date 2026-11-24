@@ -1,6 +1,7 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
+  "redirects": [{"source": "/cs", "destination": "/", "permanent": true}],
   "rewrites": [{"source": "/admin/orders/:orderNumber", "destination": "/admin/orders"}],
   "functions": {
     "api/admin-orders.js": { "maxDuration": 60, "includeFiles": "node_modules/@ibm/plex-sans/fonts/complete/woff/IBMPlexSans-{Regular,Bold}.woff" },

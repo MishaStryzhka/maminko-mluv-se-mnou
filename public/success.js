@@ -114,7 +114,7 @@ const orderNumber = params.get('order');
 const token = params.get('token');
 let order = null;
 let errorState = !orderNumber || !token ? 'missing' : null;
-const state = { lang: localStorage.getItem('maminko-lang') === 'cs' ? 'cs' : 'uk' };
+const state = { lang: localStorage.getItem('maminko-lang') === 'uk' ? 'uk' : 'cs' };
 
 function t(key) { return COPY[state.lang][key] ?? key; }
 function price(value) { return `${new Intl.NumberFormat('cs-CZ', { maximumFractionDigits: 2 }).format(Number(value) || 0)} Kč`; }
@@ -131,6 +131,9 @@ function refundState(order) {
 function render() {
     document.documentElement.lang = state.lang;
     localStorage.setItem('maminko-lang', state.lang);
+    document.querySelectorAll('a[data-storefront]').forEach((link) => {
+        link.pathname = state.lang === 'uk' ? '/uk' : '/';
+    });
     document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
     document.querySelectorAll('[data-lang]').forEach((button) => {
         button.classList.toggle('on', button.dataset.lang === state.lang);

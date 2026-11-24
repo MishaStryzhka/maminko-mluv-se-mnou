@@ -224,11 +224,14 @@
                 <button type="button" data-prev aria-label="Попередня сторінка">‹</button>
                 <output aria-live="polite"></output>
                 <button type="button" data-next aria-label="Наступна сторінка">›</button>
-                <button type="button" data-less aria-label="Зменшити">−</button>
-                <button type="button" data-more aria-label="Збільшити">+</button>
                 <button type="button" data-close aria-label="Закрити" autofocus>×</button>
             </div>
-            <div class="viewer-stage"><img alt="" draggable="false"></div>
+            <div class="viewer-stage"><img alt="" draggable="false">
+                <div class="viewer-offer" hidden>
+                    <strong>У посібнику 60 сторінок</strong>
+                    <a class="btn primary" href="#products">Обрати комплект</a>
+                </div>
+            </div>
         </dialog>
         <script src="/sample-viewer.js" type="module"></script>
         <script src="/app.js"></script>

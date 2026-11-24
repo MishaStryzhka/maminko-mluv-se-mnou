@@ -99,13 +99,14 @@ html:has(#sample-viewer[open]) { overflow: hidden; }
     background: #211d27;
 }
 #sample-viewer[open] { display: flex; flex-direction: column; }
-.viewer-controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: max(8px, env(safe-area-inset-top)) 8px 8px;
-}
+.viewer-controls { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.viewer-controls button, .viewer-controls output { position: absolute; }
+.viewer-controls button { pointer-events: auto; }
+.viewer-controls [data-close] { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); }
+.viewer-controls [data-prev], .viewer-controls [data-next] { top: 50%; transform: translateY(-50%); }
+.viewer-controls [data-prev] { left: max(8px, env(safe-area-inset-left)); }
+.viewer-controls [data-next] { right: max(8px, env(safe-area-inset-right)); }
+.viewer-controls output { bottom: max(12px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); border-radius: 16px; padding: 4px 12px; background: #211d27db; }
 .viewer-controls button {
     min-width: 44px;
     min-height: 44px;
@@ -135,3 +136,10 @@ html:has(#sample-viewer[open]) { overflow: hidden; }
     height: auto;
     pointer-events: none;
 }
+
+.viewer-stage { margin-block: max(58px, env(safe-area-inset-top)) max(48px, env(safe-area-inset-bottom)); }
+.viewer-offer:not([hidden]) {
+    height: 100%; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 20px; padding-inline: 56px; text-align: center;
+}
+.viewer-offer strong { font-size: clamp(24px, 5vw, 48px); }
